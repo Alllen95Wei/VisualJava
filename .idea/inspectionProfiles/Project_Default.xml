@@ -1,0 +1,64 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="24">
+            <item index="0" class="java.lang.String" itemvalue="nobr" />
+            <item index="1" class="java.lang.String" itemvalue="noembed" />
+            <item index="2" class="java.lang.String" itemvalue="comment" />
+            <item index="3" class="java.lang.String" itemvalue="noscript" />
+            <item index="4" class="java.lang.String" itemvalue="embed" />
+            <item index="5" class="java.lang.String" itemvalue="script" />
+            <item index="6" class="java.lang.String" itemvalue="style" />
+            <item index="7" class="java.lang.String" itemvalue="md-filled-button" />
+            <item index="8" class="java.lang.String" itemvalue="md-text-button" />
+            <item index="9" class="java.lang.String" itemvalue="md-divider" />
+            <item index="10" class="java.lang.String" itemvalue="md-filled-text-field" />
+            <item index="11" class="java.lang.String" itemvalue="md-icon" />
+            <item index="12" class="java.lang.String" itemvalue="md-dialog" />
+            <item index="13" class="java.lang.String" itemvalue="md-list" />
+            <item index="14" class="java.lang.String" itemvalue="md-list-item" />
+            <item index="15" class="java.lang.String" itemvalue="md-filled-tonal-button" />
+            <item index="16" class="java.lang.String" itemvalue="md-filled-select" />
+            <item index="17" class="java.lang.String" itemvalue="md-switch" />
+            <item index="18" class="java.lang.String" itemvalue="md-select-option" />
+            <item index="19" class="java.lang.String" itemvalue="md-chip-set" />
+            <item index="20" class="java.lang.String" itemvalue="md-filter-chip" />
+            <item index="21" class="java.lang.String" itemvalue="md-filled-icon-button" />
+            <item index="22" class="java.lang.String" itemvalue="md-checkbox" />
+            <item index="23" class="java.lang.String" itemvalue="md-linear-progress" />
+          </list>
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+    <inspection_tool class="PyMandatoryEncodingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" editorAttributes="INFO_ATTRIBUTES">
+      <option name="myAllPythons" value="true" />
+    </inspection_tool>
+    <inspection_tool class="PyPep8Inspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="E203" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredErrors">
+        <list>
+          <option value="N803" />
+          <option value="N806" />
+          <option value="N802" />
+        </list>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="ignoredNames">
+        <list>
+          <option value="help" />
+        </list>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>
