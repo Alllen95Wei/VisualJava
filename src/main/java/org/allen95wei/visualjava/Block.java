@@ -1,4 +1,4 @@
-package user_interface;
+package org.allen95wei.visualjava;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
