@@ -2,6 +2,7 @@ package org.allen95wei.visualjava.coderunner.core.store;
 
 import org.allen95wei.visualjava.coderunner.core.Store;
 
+
 public class IntegerStore implements Store<Integer> {
     private Integer value;
 
