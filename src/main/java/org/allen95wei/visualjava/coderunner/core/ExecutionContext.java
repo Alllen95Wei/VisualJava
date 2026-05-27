@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
 
 
 public class ExecutionContext {
-    private Map<String, Store<?>> stores;
+    private final Map<String, Store<?>> stores;
 
     public ExecutionContext(Map<String, Store<?>> stores) {
         this.stores = stores;
