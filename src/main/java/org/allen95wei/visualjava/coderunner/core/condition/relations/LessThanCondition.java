@@ -1,26 +1,27 @@
 package org.allen95wei.visualjava.coderunner.core.condition.relations;
 
-import org.allen95wei.visualjava.coderunner.core.Condition;
 import org.allen95wei.visualjava.coderunner.core.ExecutionContext;
-import org.allen95wei.visualjava.coderunner.core.Store;
 
 
-public class LessThanCondition implements Condition {
-    private final String storeKey;
-    private final Number threshold;
-
+public class LessThanCondition extends RelationCondition {
     public LessThanCondition(String storeKey, Number threshold) {
-        this.storeKey = storeKey;
-        this.threshold = threshold;
+        super(storeKey, threshold);
+    }
+
+    public LessThanCondition(Number threshold, String storeKey) {
+        super(threshold, storeKey);
+    }
+
+    public LessThanCondition(String leftKey, String rightKey) {
+        super(leftKey, rightKey);
+    }
+
+    public LessThanCondition(Number leftVal, Number rightVal) {
+        super(leftVal, rightVal);
     }
 
     @Override
     public boolean evaluate(ExecutionContext context) {
-        Store<?> store = context.getStore(storeKey);
-        if (store.get() instanceof Number) {
-            return ((Number) store.get()).doubleValue() < threshold.doubleValue();
-        } else {
-            throw new RuntimeException("Store value is not a number");
-        }
+        return getValue(context, left).doubleValue() < getValue(context, right).doubleValue();
     }
 }
