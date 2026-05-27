@@ -2,30 +2,39 @@ package org.allen95wei.visualjava.coderunner.core.condition.relations;
 
 import org.allen95wei.visualjava.coderunner.core.Condition;
 import org.allen95wei.visualjava.coderunner.core.ExecutionContext;
-import org.allen95wei.visualjava.coderunner.core.Store;
 
 
 public class EqualToCondition implements Condition {
-    private final String storeKey;
-    private final Object value;
+    private Object left, right;
 
-    public EqualToCondition(String storeKey, Number value) {
-        this.storeKey = storeKey;
-        this.value = value;
+    public EqualToCondition(String storeKey, Number threshold) {
+        left = storeKey;
+        right = threshold;
     }
 
-    public EqualToCondition(String storeKey, String value) {
-        this.storeKey = storeKey;
-        this.value = value;
+    public EqualToCondition(Number threshold, String storeKey) {
+        left = threshold;
+        right = storeKey;
+    }
+
+    public EqualToCondition(String leftKey, String rightKey) {
+        left = leftKey;
+        right = rightKey;
+    }
+
+    public EqualToCondition(Number leftVal, Number rightVal) {
+        left = leftVal;
+        right = rightVal;
     }
 
     @Override
     public boolean evaluate(ExecutionContext context) {
-        Store<?> store = context.getStore(storeKey);
-        if (store.get() instanceof Number || store.get() instanceof String) {
-            return store.get().equals(value);
-        } else {
-            throw new RuntimeException("Store value is not a number");
+        if (left instanceof String) {
+            left = context.getStore(left.toString()).get();
         }
+        if (right instanceof String) {
+            right = context.getStore(right.toString()).get();
+        }
+        return left.equals(right);
     }
 }
