@@ -28,8 +28,8 @@ public class ExecutionContext {
         return stores.get(name);
     }
 
-    public boolean hasStore(String name) {
-        return stores.containsKey(name);
+    public boolean hasStore(String storeKey) {
+        return stores.containsKey(storeKey);
     }
 
      public Map<String, Store<?>> getStores() {
