@@ -12,10 +12,6 @@ public class PrintStep implements Step {
         result = str;
     }
 
-    public PrintStep(Store<Object> store) {
-        this(store.get().toString());
-    }
-
     public PrintStep(String format, Store<?> store) {
         this(String.format(format, store.get()));
     }
