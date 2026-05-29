@@ -16,7 +16,7 @@ public class ExecutionContext {
         this(new HashMap<>());
     }
 
-    public void addStore(String name, Store<?> store) {
+    public void setStore(String name, Store<?> store) {
         stores.put(name, store);
     }
 
