@@ -3,24 +3,24 @@ package org.allen95wei.visualjava.coderunner.core.store;
 import org.allen95wei.visualjava.coderunner.core.Store;
 
 
-public class DoubleStore implements Store<Double> {
-    private Double value;
+public class NumberStore implements Store<Number> {
+    private Number value;
 
-    public DoubleStore() {
-        this(0.0d);
+    public NumberStore() {
+        this(0);
     }
 
-    public DoubleStore(Double value) {
+    public NumberStore(Number value) {
         this.value = value;
     }
 
     @Override
-    public void put(Double value) {
+    public void put(Number value) {
         this.value = value;
     }
 
     @Override
-    public Double get() {
+    public Number get() {
         return value;
     }
 }
