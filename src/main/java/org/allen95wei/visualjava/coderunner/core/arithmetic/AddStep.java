@@ -1,7 +1,6 @@
 package org.allen95wei.visualjava.coderunner.core.arithmetic;
 
 import org.allen95wei.visualjava.coderunner.core.ExecutionContext;
-import org.allen95wei.visualjava.coderunner.core.Step;
 
 
 public class AddStep extends ArithmeticStep {
