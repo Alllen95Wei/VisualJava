@@ -2,6 +2,7 @@ package org.allen95wei.visualjava.coderunner.core.control;
 
 import org.allen95wei.visualjava.coderunner.core.ExecutionContext;
 import org.allen95wei.visualjava.coderunner.core.Step;
+import org.allen95wei.visualjava.coderunner.core.arithmetic.ArithmeticStep;
 import org.allen95wei.visualjava.coderunner.core.store.NumberStore;
 import org.allen95wei.visualjava.coderunner.core.store.StringStore;
 
@@ -14,6 +15,11 @@ public class SetStep implements Step {
     public SetStep(String storeKey, Number value) {
         this.storeKey = storeKey;
         this.value = value;
+    }
+
+    public SetStep(String storeKey, ArithmeticStep arithmeticStep) {
+        this.storeKey = storeKey;
+        this.value = arithmeticStep;
     }
 
     public SetStep(String storeKey, String value) {
@@ -36,6 +42,8 @@ public class SetStep implements Step {
         Object trueValue;
         if (valueIsStoreKey) {
             trueValue = context.getStore(value.toString()).get();
+        } else if (value instanceof ArithmeticStep arithmeticStep) {
+            trueValue = arithmeticStep.calculate(context);
         } else {
             trueValue = value;
         }
