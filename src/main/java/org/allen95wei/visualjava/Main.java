@@ -1,7 +1,7 @@
 package org.allen95wei.visualjava;
 
-
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
@@ -80,36 +80,33 @@ public class Main extends Application {
         toolbox.getChildren().addAll(
 
                 createTemplateBlock(
-                        "開始",
-                        Color.LIGHTGREEN,
+                        "判斷",
+                        Color.LIGHTBLUE,
+                        BlockType.DECISION,
                         blocksLayer,
                         workspace
                 ),
 
                 createTemplateBlock(
-                        "移動",
+                        "步驟",
                         Color.ORANGE,
+                        BlockType.PROCESS,
                         blocksLayer,
                         workspace
                 ),
 
                 createTemplateBlock(
-                        "旋轉",
-                        Color.SKYBLUE,
+                        "變數",
+                        Color.LIGHTGREEN,
+                        BlockType.VARIABLE,
                         blocksLayer,
                         workspace
                 ),
 
                 createTemplateBlock(
-                        "重複",
+                        "條件",
                         Color.PLUM,
-                        blocksLayer,
-                        workspace
-                ),
-
-                createTemplateBlock(
-                        "等待",
-                        Color.PINK,
+                        BlockType.CONDITION,
                         blocksLayer,
                         workspace
                 )
@@ -138,16 +135,17 @@ public class Main extends Application {
     private Block createTemplateBlock(
             String text,
             Color color,
+            BlockType type,
             Pane blocksLayer,
             Pane workspace
     ) {
 
-        Block template = new Block(text, color);
+        Block template = new Block(text, color, type);
 
         template.setOnMousePressed(e -> {
 
             // 建立新積木
-            Block newBlock = new Block(text, color);
+            Block newBlock = new Block(text, color, type);
 
             blocksLayer.getChildren().add(newBlock);
 
@@ -180,7 +178,6 @@ public class Main extends Application {
 
                 newBlock.toFront();
 
-                snapPreview(newBlock, blocksLayer);
             });
 
             // ===== 放開 =====
@@ -194,7 +191,6 @@ public class Main extends Application {
 
                 if (insideWorkspace) {
 
-                    snapToBlock(newBlock, blocksLayer);
 
                     enableDrag(newBlock, workspace);
 
@@ -208,7 +204,7 @@ public class Main extends Application {
 
         return template;
     }
-    // 讓積木可拖曳 + 吸附
+    // 讓積木可拖
     private void enableDrag(Block block, Pane workspace) {
 
         final double[] offset = new double[2];
@@ -227,73 +223,10 @@ public class Main extends Application {
             block.setLayoutX(e.getSceneX() - offset[0]);
             block.setLayoutY(e.getSceneY() - offset[1]);
 
-            // 吸附預覽
-            snapPreview(block, workspace);
         });
 
-        block.setOnMouseReleased(e -> {
-            snapToBlock(block, workspace);
-        });
     }
 
-    // 吸附功能
-    private void snapToBlock(Block current, Pane workspace) {
-
-        for (var node : workspace.getChildren()) {
-
-            if (node == current || !(node instanceof Block target))
-                continue;
-
-            double dx = Math.abs(current.getLayoutX() - target.getLayoutX());
-
-            double dy = Math.abs(
-                    current.getLayoutY()
-                            - (target.getLayoutY() + target.getHeight())
-            );
-
-            // 接近時自動吸附
-            if (dx < 30 && dy < 30) {
-
-                current.setLayoutX(target.getLayoutX());
-                current.setLayoutY(
-                        target.getLayoutY() + target.getHeight() + 5
-                );
-
-                return;
-            }
-        }
-    }
-
-    // 拖曳時預覽（可之後擴充高亮）
-    private void snapPreview(Block current, Pane workspace) {
-
-        for (var node : workspace.getChildren()) {
-
-            if (node == current || !(node instanceof Block target))
-                continue;
-
-            double dx = Math.abs(current.getLayoutX() - target.getLayoutX());
-
-            double dy = Math.abs(
-                    current.getLayoutY()
-                            - (target.getLayoutY() + target.getHeight())
-            );
-
-            if (dx < 30 && dy < 30) {
-
-                target.setStyle("""
-                        -fx-background-color: yellow;
-                        -fx-background-radius: 10;
-                        -fx-border-radius: 10;
-                        -fx-border-color: black;
-                        """);
-
-            } else {
-
-                target.resetStyle();
-            }
-        }
-    }
 
     public static void main(String[] args) {
         launch();
