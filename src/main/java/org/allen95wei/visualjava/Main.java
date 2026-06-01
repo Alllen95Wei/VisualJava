@@ -6,9 +6,13 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 
 public class Main extends Application {
+    private Line tempLine;
+    private Circle startNode;
 
     @Override
     public void start(Stage stage) {
@@ -70,6 +74,11 @@ public class Main extends Application {
         resultPane.getChildren().add(resultLabel);
 
         // =========================
+        // 箭頭圖層
+        // =========================
+        Pane arrowLayer = new Pane();
+
+        // =========================
         // 積木圖層
         // =========================
         Pane blocksLayer = new Pane();
@@ -84,7 +93,8 @@ public class Main extends Application {
                         Color.LIGHTBLUE,
                         BlockType.DECISION,
                         blocksLayer,
-                        workspace
+                        workspace,
+                        arrowLayer
                 ),
 
                 createTemplateBlock(
@@ -92,7 +102,8 @@ public class Main extends Application {
                         Color.ORANGE,
                         BlockType.PROCESS,
                         blocksLayer,
-                        workspace
+                        workspace,
+                        arrowLayer
                 ),
 
                 createTemplateBlock(
@@ -100,7 +111,8 @@ public class Main extends Application {
                         Color.LIGHTGREEN,
                         BlockType.VARIABLE,
                         blocksLayer,
-                        workspace
+                        workspace,
+                        arrowLayer
                 ),
 
                 createTemplateBlock(
@@ -108,7 +120,8 @@ public class Main extends Application {
                         Color.PLUM,
                         BlockType.CONDITION,
                         blocksLayer,
-                        workspace
+                        workspace,
+                        arrowLayer
                 )
         );
 
@@ -119,6 +132,7 @@ public class Main extends Application {
                 workspace,
                 resultPane,
                 toolbox,
+                arrowLayer,
                 blocksLayer
         );
 
@@ -137,7 +151,8 @@ public class Main extends Application {
             Color color,
             BlockType type,
             Pane blocksLayer,
-            Pane workspace
+            Pane workspace,
+            Pane arrowLayer
     ) {
 
         Block template = new Block(text, color, type);
@@ -149,6 +164,12 @@ public class Main extends Application {
 
             blocksLayer.getChildren().add(newBlock);
 
+            setupArrowConnection(newBlock, arrowLayer);
+
+            setupArrowConnection(
+                    newBlock,
+                    arrowLayer
+            );
             // 最上層
             newBlock.toFront();
 
@@ -227,6 +248,111 @@ public class Main extends Application {
 
     }
 
+    private void setupArrowConnection(
+            Block block,
+            Pane arrowLayer
+    ) {
+
+        setupOutputNode(block.getOutputCircle(), arrowLayer);
+
+        setupOutputNode(block.getRightCircle(), arrowLayer);
+    }
+
+    private void setupOutputNode(
+            Circle outputNode,
+            Pane arrowLayer
+    ) {
+
+        if (outputNode == null)
+            return;
+
+        outputNode.setOnMousePressed(e -> {
+
+            tempLine = new Line();
+
+            startNode = outputNode;
+
+            tempLine.setStartX(
+                    startNode.localToScene(
+                            startNode.getCenterX(),
+                            startNode.getCenterY()
+                    ).getX()
+            );
+
+            tempLine.setStartY(
+                    startNode.localToScene(
+                            startNode.getCenterX(),
+                            startNode.getCenterY()
+                    ).getY()
+            );
+
+            tempLine.setEndX(e.getSceneX());
+            tempLine.setEndY(e.getSceneY());
+
+            arrowLayer.getChildren().add(tempLine);
+
+            e.consume();
+        });
+
+        outputNode.setOnMouseDragged(e -> {
+
+            if (tempLine != null) {
+
+                tempLine.setEndX(e.getSceneX());
+                tempLine.setEndY(e.getSceneY());
+            }
+
+            e.consume();
+        });
+
+        outputNode.setOnMouseReleased(e -> {
+
+            boolean connected = false;
+
+            for (var node : arrowLayer.getParent().lookupAll("*")) {
+
+                if (!(node instanceof Block target))
+                    continue;
+
+                Circle input = target.getInputCircle();
+
+                if (input == null)
+                    continue;
+
+                if (input.localToScene(
+                        input.getBoundsInLocal()
+                ).contains(
+                        e.getSceneX(),
+                        e.getSceneY()
+                )) {
+
+                    tempLine.setEndX(
+                            input.localToScene(
+                                    input.getCenterX(),
+                                    input.getCenterY()
+                            ).getX()
+                    );
+
+                    tempLine.setEndY(
+                            input.localToScene(
+                                    input.getCenterX(),
+                                    input.getCenterY()
+                            ).getY()
+                    );
+
+                    connected = true;
+                    break;
+                }
+            }
+
+            if (!connected && tempLine != null) {
+
+                arrowLayer.getChildren().remove(tempLine);
+            }
+
+            e.consume();
+        });
+    }
 
     public static void main(String[] args) {
         launch();

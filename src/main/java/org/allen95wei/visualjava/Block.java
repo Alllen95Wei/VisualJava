@@ -16,6 +16,7 @@ public class Block extends StackPane {
     private Circle outputCircle;  // 黑圈
     private Circle rightCircle;   // 條件模塊右側黑圈
 
+
     public Block(String text, Color color, BlockType type) {
 
         this.color = color;
@@ -160,5 +161,17 @@ public class Block extends StackPane {
 
     public double getBlockHeight() {
         return bg.getBoundsInLocal().getHeight();
+    }
+
+    public Circle getInputCircle() {
+        return inputCircle;
+    }
+
+    public Circle getOutputCircle() {
+        return outputCircle;
+    }
+
+    public Circle getRightCircle() {
+        return rightCircle;
     }
 }
