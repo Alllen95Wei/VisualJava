@@ -17,6 +17,9 @@ public class Main extends Application {
     private Line tempLine;
     private Circle startNode;
 
+    private VBox toolbox;
+    private Pane resultPane;
+
     @Override
     public void start(Stage stage) {
 
@@ -25,7 +28,7 @@ public class Main extends Application {
         // =========================
         // 左邊工具欄
         // =========================
-        VBox toolbox = new VBox(15);
+        toolbox = new VBox(15);
 
         toolbox.setLayoutX(0);
         toolbox.setLayoutY(0);
@@ -56,7 +59,7 @@ public class Main extends Application {
         // =========================
         // 執行結果區
         // =========================
-        Pane resultPane = new Pane();
+        resultPane = new Pane();
 
         resultPane.setLayoutX(640);
         resultPane.setLayoutY(0);
@@ -219,36 +222,35 @@ public class Main extends Application {
 
             newBlock.setOnMouseReleased(ev -> {
 
+                // ① 方塊中心（scene 座標）
                 Bounds blockBounds = newBlock.localToScene(newBlock.getBoundsInLocal());
+
+                double centerX = (blockBounds.getMinX() + blockBounds.getMaxX()) / 2;
+                double centerY = (blockBounds.getMinY() + blockBounds.getMaxY()) / 2;
+
+                // ② 各區域範圍
                 Bounds workspaceBounds = workspace.localToScene(workspace.getBoundsInLocal());
+                Bounds toolboxBounds = toolbox.localToScene(toolbox.getBoundsInLocal());
+                Bounds resultBounds = resultPane.localToScene(resultPane.getBoundsInLocal());
 
-                boolean insideWorkspace =
-                        workspaceBounds.contains(blockBounds.getMinX(), blockBounds.getMinY()) &&
-                                workspaceBounds.contains(blockBounds.getMaxX(), blockBounds.getMinY()) &&
-                                workspaceBounds.contains(blockBounds.getMinX(), blockBounds.getMaxY()) &&
-                                workspaceBounds.contains(blockBounds.getMaxX(), blockBounds.getMaxY());
+                // ③ 判斷位置
+                boolean inWorkspace = workspaceBounds.contains(centerX, centerY);
+                boolean inToolbox = toolboxBounds.contains(centerX, centerY);
+                boolean inResult = resultBounds.contains(centerX, centerY);
 
-                if (!insideWorkspace) {
-                    removeBlock(
-                            newBlock,
-                            blocksLayer,
-                            arrowLayer
-                    );
+                // ④ 不合法 → 刪除（🔥 核心）
+                if (!inWorkspace || inToolbox || inResult) {
+                    removeBlock(newBlock, blocksLayer, arrowLayer);
                     return;
                 }
 
+                // ⑤ 合法 → 啟用拖曳
                 enableDrag(newBlock, workspace);
 
-
+                // ⑥ 雙擊刪除
                 newBlock.setOnMouseClicked(event -> {
-
                     if (event.getClickCount() == 2) {
-
-                        removeBlock(
-                                newBlock,
-                                blocksLayer,
-                                arrowLayer
-                        );
+                        removeBlock(newBlock, blocksLayer, arrowLayer);
                     }
                 });
             });
