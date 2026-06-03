@@ -155,12 +155,22 @@ public class Main extends Application {
             Pane arrowLayer
     ) {
 
-        Block template = new Block(text, color, type);
+        Block template =
+                BlockFactory.createBlock(
+                        text,
+                        color,
+                        type
+                );
 
         template.setOnMousePressed(e -> {
 
             // 建立新積木
-            Block newBlock = new Block(text, color, type);
+            Block newBlock =
+                    BlockFactory.createBlock(
+                            text,
+                            color,
+                            type
+                    );
 
             blocksLayer.getChildren().add(newBlock);
 
