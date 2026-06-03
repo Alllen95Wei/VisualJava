@@ -7,6 +7,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
+import java.util.LinkedList;
 
 public abstract class Block extends StackPane {
 
@@ -19,6 +20,9 @@ public abstract class Block extends StackPane {
     protected Circle inputCircle;
     protected Circle outputCircle;
     protected Circle rightCircle;
+
+    protected LinkedList<Connection> outputs =
+            new LinkedList<>();
 
     public Block(String text, Color color) {
 
@@ -52,5 +56,9 @@ public abstract class Block extends StackPane {
 
     public Circle getRightCircle() {
         return rightCircle;
+    }
+
+    public LinkedList<Connection> getOutputs() {
+        return outputs;
     }
 }
