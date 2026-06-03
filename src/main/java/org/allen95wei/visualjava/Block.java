@@ -23,6 +23,8 @@ public abstract class Block extends StackPane {
 
     protected LinkedList<Connection> outputs =
             new LinkedList<>();
+    protected LinkedList<Connection> inputs =
+            new LinkedList<>();
 
     public Block(String text, Color color) {
 
@@ -60,5 +62,9 @@ public abstract class Block extends StackPane {
 
     public LinkedList<Connection> getOutputs() {
         return outputs;
+    }
+
+    public LinkedList<Connection> getInputs() {
+        return inputs;
     }
 }

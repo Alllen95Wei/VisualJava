@@ -9,6 +9,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
+import java.util.ArrayList;
 
 public class Main extends Application {
     private Line tempLine;
@@ -220,16 +221,33 @@ public class Main extends Application {
                                 workspace.getBoundsInParent()
                         );
 
-                if (insideWorkspace) {
-
-
-                    enableDrag(newBlock, workspace);
-
-                } else {
-
-                    // 不在工作區 → 刪除
-                    blocksLayer.getChildren().remove(newBlock);
+                if (!insideWorkspace) {
+                    removeBlock(
+                            newBlock,
+                            blocksLayer,
+                            arrowLayer
+                    );
+                    return;
                 }
+
+                enableDrag(newBlock, workspace);
+
+                setupArrowConnection(
+                        newBlock,
+                        arrowLayer
+                );
+
+                newBlock.setOnMouseClicked(event -> {
+
+                    if (e.getClickCount() == 2) {
+
+                        removeBlock(
+                                newBlock,
+                                blocksLayer,
+                                arrowLayer
+                        );
+                    }
+                });
             });
         });
 
@@ -254,6 +272,7 @@ public class Main extends Application {
             block.setLayoutX(e.getSceneX() - offset[0]);
             block.setLayoutY(e.getSceneY() - offset[1]);
 
+            updateBlockConnections(block);
         });
 
     }
@@ -350,6 +369,19 @@ public class Main extends Application {
                             ).getY()
                     );
 
+                    Block from =
+                            (Block) outputNode.getParent();
+
+                    Connection connection =
+                            new Connection(
+                                    from,
+                                    target,
+                                    tempLine
+                            );
+
+                    from.getOutputs().add(connection);
+                    target.getInputs().add(connection);
+
                     connected = true;
                     break;
                 }
@@ -362,6 +394,93 @@ public class Main extends Application {
 
             e.consume();
         });
+    }
+
+    private void updateConnections(Block block) {
+
+        for (Connection c : block.getOutputs()) {
+            updateLine(c);
+        }
+    }
+
+    private void updateLine(Connection c) {
+
+        Circle out = c.getFrom().getOutputCircle();
+        Circle in = c.getTo().getInputCircle();
+
+        if (out == null || in == null)
+            return;
+
+        Line line = c.getLine();
+
+        line.setStartX(
+                out.localToScene(
+                        out.getCenterX(),
+                        out.getCenterY()
+                ).getX()
+        );
+
+        line.setStartY(
+                out.localToScene(
+                        out.getCenterX(),
+                        out.getCenterY()
+                ).getY()
+        );
+
+        line.setEndX(
+                in.localToScene(
+                        in.getCenterX(),
+                        in.getCenterY()
+                ).getX()
+        );
+
+        line.setEndY(
+                in.localToScene(
+                        in.getCenterX(),
+                        in.getCenterY()
+                ).getY()
+        );
+    }
+
+    private void updateBlockConnections(Block block) {
+
+        block.getInputs().forEach(this::updateLine);
+        block.getOutputs().forEach(this::updateLine);
+    }
+
+    private void removeBlock(
+            Block block,
+            Pane blocksLayer,
+            Pane arrowLayer) {
+
+        for (Connection c :
+                new ArrayList<>(block.getOutputs())) {
+
+            arrowLayer.getChildren().remove(
+                    c.getLine()
+            );
+
+            c.getTo()
+                    .getInputs()
+                    .remove(c);
+        }
+
+        for (Connection c :
+                new ArrayList<>(block.getInputs())) {
+
+            arrowLayer.getChildren().remove(
+                    c.getLine()
+            );
+
+            c.getFrom()
+                    .getOutputs()
+                    .remove(c);
+        }
+
+        block.getOutputs().clear();
+        block.getInputs().clear();
+
+        blocksLayer.getChildren().remove(block);
     }
 
     public static void main(String[] args) {
