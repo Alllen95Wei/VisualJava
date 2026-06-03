@@ -10,6 +10,8 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.stage.Stage;
 import java.util.ArrayList;
+import javafx.geometry.Point2D;
+import javafx.geometry.Bounds;
 
 public class Main extends Application {
     private Line tempLine;
@@ -130,9 +132,12 @@ public class Main extends Application {
         // 加入 root
         // =========================
         root.getChildren().addAll(
-                workspace,
-                resultPane,
                 toolbox,
+                workspace,
+                resultPane
+        );
+
+        workspace.getChildren().addAll(
                 arrowLayer,
                 blocksLayer
         );
@@ -165,6 +170,7 @@ public class Main extends Application {
 
         template.setOnMousePressed(e -> {
 
+            System.out.println("建立新方塊");
             // 建立新積木
             Block newBlock =
                     BlockFactory.createBlock(
@@ -174,8 +180,6 @@ public class Main extends Application {
                     );
 
             blocksLayer.getChildren().add(newBlock);
-
-            setupArrowConnection(newBlock, arrowLayer);
 
             setupArrowConnection(
                     newBlock,
@@ -188,38 +192,41 @@ public class Main extends Application {
             double offsetX = newBlock.getBlockWidth() / 2;
             double offsetY = newBlock.getBlockHeight() / 2;
 
-            newBlock.setLayoutX(
-                    e.getSceneX() - offsetX
-            );
+            Point2D point = workspace.sceneToLocal(e.getSceneX(), e.getSceneY());
 
-            newBlock.setLayoutY(
-                    e.getSceneY() - offsetY
-            );
-
-            // ===== 拖曳事件 =====
+            newBlock.setLayoutX(point.getX() - offsetX);
+            newBlock.setLayoutY(point.getY() - offsetY);
 
             newBlock.setOnMouseDragged(ev -> {
 
+                Point2D dragPoint = workspace.sceneToLocal(
+                        ev.getSceneX(),
+                        ev.getSceneY()
+                );
+
                 newBlock.setLayoutX(
-                        ev.getSceneX() - offsetX
+                        dragPoint.getX() - offsetX
                 );
 
                 newBlock.setLayoutY(
-                        ev.getSceneY() - offsetY
+                        dragPoint.getY() - offsetY
                 );
 
                 newBlock.toFront();
-
             });
 
             // ===== 放開 =====
 
             newBlock.setOnMouseReleased(ev -> {
 
+                Bounds blockBounds = newBlock.localToScene(newBlock.getBoundsInLocal());
+                Bounds workspaceBounds = workspace.localToScene(workspace.getBoundsInLocal());
+
                 boolean insideWorkspace =
-                        newBlock.getBoundsInParent().intersects(
-                                workspace.getBoundsInParent()
-                        );
+                        workspaceBounds.contains(blockBounds.getMinX(), blockBounds.getMinY()) &&
+                                workspaceBounds.contains(blockBounds.getMaxX(), blockBounds.getMinY()) &&
+                                workspaceBounds.contains(blockBounds.getMinX(), blockBounds.getMaxY()) &&
+                                workspaceBounds.contains(blockBounds.getMaxX(), blockBounds.getMaxY());
 
                 if (!insideWorkspace) {
                     removeBlock(
@@ -232,14 +239,10 @@ public class Main extends Application {
 
                 enableDrag(newBlock, workspace);
 
-                setupArrowConnection(
-                        newBlock,
-                        arrowLayer
-                );
 
                 newBlock.setOnMouseClicked(event -> {
 
-                    if (e.getClickCount() == 2) {
+                    if (event.getClickCount() == 2) {
 
                         removeBlock(
                                 newBlock,
@@ -260,17 +263,22 @@ public class Main extends Application {
 
         block.setOnMousePressed(e -> {
 
-            // 拖曳時永遠最上層
             block.toFront();
 
-            offset[0] = e.getSceneX() - block.getLayoutX();
-            offset[1] = e.getSceneY() - block.getLayoutY();
-        });
+            Point2D point = workspace.sceneToLocal(
+                    e.getSceneX(),
+                    e.getSceneY()
+            );
 
+            offset[0] = point.getX() - block.getLayoutX();
+            offset[1] = point.getY() - block.getLayoutY();
+        });
         block.setOnMouseDragged(e -> {
 
-            block.setLayoutX(e.getSceneX() - offset[0]);
-            block.setLayoutY(e.getSceneY() - offset[1]);
+            Point2D point = workspace.sceneToLocal(e.getSceneX(), e.getSceneY());
+
+            block.setLayoutX(point.getX() - offset[0]);
+            block.setLayoutY(point.getY() - offset[1]);
 
             updateBlockConnections(block);
         });
@@ -301,22 +309,24 @@ public class Main extends Application {
 
             startNode = outputNode;
 
-            tempLine.setStartX(
+            Point2D start = arrowLayer.sceneToLocal(
                     startNode.localToScene(
-                            startNode.getCenterX(),
-                            startNode.getCenterY()
-                    ).getX()
+                            startNode.getBoundsInLocal().getCenterX(),
+                            startNode.getBoundsInLocal().getCenterY()
+                    )
             );
 
-            tempLine.setStartY(
-                    startNode.localToScene(
-                            startNode.getCenterX(),
-                            startNode.getCenterY()
-                    ).getY()
+
+            tempLine.setStartX(start.getX());
+            tempLine.setStartY(start.getY());
+
+            Point2D end = arrowLayer.sceneToLocal(
+                    e.getSceneX(),
+                    e.getSceneY()
             );
 
-            tempLine.setEndX(e.getSceneX());
-            tempLine.setEndY(e.getSceneY());
+            tempLine.setEndX(end.getX());
+            tempLine.setEndY(end.getY());
 
             arrowLayer.getChildren().add(tempLine);
 
@@ -327,8 +337,13 @@ public class Main extends Application {
 
             if (tempLine != null) {
 
-                tempLine.setEndX(e.getSceneX());
-                tempLine.setEndY(e.getSceneY());
+                Point2D p = arrowLayer.sceneToLocal(
+                        e.getSceneX(),
+                        e.getSceneY()
+                );
+
+                tempLine.setEndX(p.getX());
+                tempLine.setEndY(p.getY());
             }
 
             e.consume();
@@ -355,19 +370,15 @@ public class Main extends Application {
                         e.getSceneY()
                 )) {
 
-                    tempLine.setEndX(
+                    Point2D end = arrowLayer.sceneToLocal(
                             input.localToScene(
-                                    input.getCenterX(),
-                                    input.getCenterY()
-                            ).getX()
+                                    input.getBoundsInLocal().getCenterX(),
+                                    input.getBoundsInLocal().getCenterY()
+                            )
                     );
 
-                    tempLine.setEndY(
-                            input.localToScene(
-                                    input.getCenterX(),
-                                    input.getCenterY()
-                            ).getY()
-                    );
+                    tempLine.setEndX(end.getX());
+                    tempLine.setEndY(end.getY());
 
                     Block from =
                             (Block) outputNode.getParent();
@@ -413,33 +424,27 @@ public class Main extends Application {
 
         Line line = c.getLine();
 
-        line.setStartX(
+        // ===== 起點 =====
+        Point2D start = line.getParent().sceneToLocal(
                 out.localToScene(
-                        out.getCenterX(),
-                        out.getCenterY()
-                ).getX()
+                        out.getBoundsInLocal().getCenterX(),
+                        out.getBoundsInLocal().getCenterY()
+                )
         );
 
-        line.setStartY(
-                out.localToScene(
-                        out.getCenterX(),
-                        out.getCenterY()
-                ).getY()
-        );
-
-        line.setEndX(
+        // ===== 終點 =====
+        Point2D end = line.getParent().sceneToLocal(
                 in.localToScene(
-                        in.getCenterX(),
-                        in.getCenterY()
-                ).getX()
+                        in.getBoundsInLocal().getCenterX(),
+                        in.getBoundsInLocal().getCenterY()
+                )
         );
 
-        line.setEndY(
-                in.localToScene(
-                        in.getCenterX(),
-                        in.getCenterY()
-                ).getY()
-        );
+        line.setStartX(start.getX());
+        line.setStartY(start.getY());
+
+        line.setEndX(end.getX());
+        line.setEndY(end.getY());
     }
 
     private void updateBlockConnections(Block block) {
