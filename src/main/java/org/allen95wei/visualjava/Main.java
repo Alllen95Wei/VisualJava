@@ -307,6 +307,24 @@ public class Main extends Application {
 
         outputNode.setOnMousePressed(e -> {
 
+            if (outputNode.isDisable()) {
+                return;
+            }
+
+            Block from =
+                    (Block) outputNode.getParent();
+
+            boolean used =
+                    from.getOutputs()
+                            .stream()
+                            .anyMatch(
+                                    c -> c.getFromNode() == outputNode
+                            );
+
+            if (used) {
+                return;
+            }
+
             tempLine = new Line();
 
             startNode = outputNode;
@@ -389,11 +407,15 @@ public class Main extends Application {
                             new Connection(
                                     from,
                                     target,
+                                    outputNode,
                                     tempLine
                             );
 
                     from.getOutputs().add(connection);
                     target.getInputs().add(connection);
+
+                    // 鎖定此輸出端
+                    outputNode.setDisable(true);
 
                     connected = true;
                     break;
@@ -418,7 +440,7 @@ public class Main extends Application {
 
     private void updateLine(Connection c) {
 
-        Circle out = c.getFrom().getOutputCircle();
+        Circle out = c.getFromNode();
         Circle in = c.getTo().getInputCircle();
 
         if (out == null || in == null)
@@ -463,6 +485,8 @@ public class Main extends Application {
         for (Connection c :
                 new ArrayList<>(block.getOutputs())) {
 
+            c.getFromNode().setDisable(false);
+
             arrowLayer.getChildren().remove(
                     c.getLine()
             );
@@ -474,6 +498,9 @@ public class Main extends Application {
 
         for (Connection c :
                 new ArrayList<>(block.getInputs())) {
+
+            // 恢復來源輸出端
+            c.getFromNode().setDisable(false);
 
             arrowLayer.getChildren().remove(
                     c.getLine()

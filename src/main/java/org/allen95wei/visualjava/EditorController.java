@@ -321,6 +321,7 @@ public class EditorController {
                             new Connection(
                                     sourceBlock,
                                     targetBlock,
+                                    outputNode,
                                     tempLine
                             );
 
