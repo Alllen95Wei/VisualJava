@@ -383,6 +383,12 @@ public class Main extends Application {
                 if (input == null)
                     continue;
 
+                Block from =
+                        (Block) outputNode.getParent();
+
+                if (from == target)
+                    continue;
+
                 if (input.localToScene(
                         input.getBoundsInLocal()
                 ).contains(
@@ -400,8 +406,7 @@ public class Main extends Application {
                     tempLine.setEndX(end.getX());
                     tempLine.setEndY(end.getY());
 
-                    Block from =
-                            (Block) outputNode.getParent();
+                    //Block from =(Block) outputNode.getParent();
 
                     Connection connection =
                             new Connection(
@@ -429,13 +434,6 @@ public class Main extends Application {
 
             e.consume();
         });
-    }
-
-    private void updateConnections(Block block) {
-
-        for (Connection c : block.getOutputs()) {
-            updateLine(c);
-        }
     }
 
     private void updateLine(Connection c) {

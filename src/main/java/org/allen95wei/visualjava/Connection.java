@@ -10,6 +10,8 @@ public class Connection {
     private Block to;
     private Line line;
 
+    private Circle fromNode;
+
     private Circle fromCircle;
     private Circle toCircle;
 
@@ -18,10 +20,12 @@ public class Connection {
     public Connection(
             Block from,
             Block to,
+            Circle fromNode,
             Line line
     ) {
         this.from = from;
         this.to = to;
+        this.fromNode = fromNode;
         this.line = line;
 
         this.fromCircle = from.getOutputCircle();
@@ -50,6 +54,10 @@ public class Connection {
 
     public Block getTo() {
         return to;
+    }
+
+    public Circle getFromNode() {
+        return fromNode;
     }
 
     public Line getLine() {
