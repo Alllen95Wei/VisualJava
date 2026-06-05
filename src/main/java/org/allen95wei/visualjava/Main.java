@@ -505,6 +505,18 @@ public class Main extends Application {
                 process.setNextBlock(null);
             }
 
+            if (c.getFrom() instanceof ConditionBlock condition) {
+
+                if (c.getFromNode() == condition.getOutputCircle()) {
+
+                    condition.setNextBlockTrue(null);
+
+                } else if (c.getFromNode() == condition.getRightCircle()) {
+
+                    condition.setNextBlockFalse(null);
+                }
+            }
+
             // 恢復來源輸出端
             c.getFromNode().setDisable(false);
 

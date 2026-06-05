@@ -9,6 +9,26 @@ import javafx.scene.shape.Rectangle;
 
 public class ConditionBlock extends Block {
 
+    private Block nextBlockTrue;
+    private Block nextBlockFalse;
+
+    public Block getNextBlockTrue() {
+        return nextBlockTrue;
+    }
+
+    public void setNextBlockTrue(Block nextBlockTrue) {
+        this.nextBlockTrue = nextBlockTrue;
+    }
+
+    public Block getNextBlockFalse() {
+        return nextBlockFalse;
+    }
+
+    public void setNextBlockFalse(Block nextBlockFalse) {
+        this.nextBlockFalse = nextBlockFalse;
+    }
+
+
     public ConditionBlock(String text, Color color) {
 
         super(text, color);
