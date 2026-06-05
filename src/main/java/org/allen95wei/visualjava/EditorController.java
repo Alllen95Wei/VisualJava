@@ -2,6 +2,9 @@ package org.allen95wei.visualjava;
 
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
+import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -37,46 +40,46 @@ public class EditorController {
     private Label resultLabel;
 
     private Line tempLine;
-    private Circle startNode;
 
-    // 目前正在從工具欄拖出的新積木 / The new block currently dragged from the toolbox
     private Block draggingBlock;
 
-    // 拖曳時滑鼠和積木位置的偏移量 / Offset between mouse position and block position while dragging
     private double draggingOffsetX;
     private double draggingOffsetY;
 
-    // 暫時儲存整個畫面的拖曳事件 / Temporarily stores the whole-scene drag event
     private EventHandler<MouseEvent> sceneDragHandler;
-
-    // 暫時儲存整個畫面的放開事件 / Temporarily stores the whole-scene release event
     private EventHandler<MouseEvent> sceneReleaseHandler;
 
     @FXML
     public void initialize() {
 
-        // 透明圖層不要擋住滑鼠事件 / Transparent layers should not block mouse events
         blocksLayer.setPickOnBounds(false);
         arrowLayer.setPickOnBounds(false);
 
-        // 調整圖層順序，讓工具欄可以被點擊 / Adjust layer order so the toolbox can be clicked
-        arrowLayer.toFront();
+        arrowLayer.toBack();
         blocksLayer.toFront();
+
         toolbox.toFront();
 
-        // 建立左邊工具欄的模板積木 / Create template blocks in the left toolbox
+        // 讓工具欄裡的積木保持自己的大小，不要被 VBox 拉寬
+        // Keep toolbox blocks at their own size, do not let VBox stretch them
+        toolbox.setAlignment(Pos.CENTER);
+        toolbox.setFillWidth(false);
+
         toolbox.getChildren().addAll(
                 createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
                 createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
                 createTemplateBlock("變數", Color.LIGHTGREEN, BlockType.VARIABLE),
-                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION)
+                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION),
+
+                createTemplateBlock("IF", Color.YELLOW, BlockType.IF),
+                createTemplateBlock("NOT", Color.web("#19A9E2"), BlockType.NOT),
+                createTemplateBlock("AND", Color.web("#19A9E2"), BlockType.AND),
+                createTemplateBlock("OR", Color.web("#19A9E2"), BlockType.OR)
         );
 
-        // 初始化右邊結果區文字 / Initialize the right result area text
         resultLabel.setText("執行結果區");
     }
 
-    // 建立工具欄模板積木 / Create a template block for the toolbox
     private Block createTemplateBlock(
             String text,
             Color color,
@@ -84,38 +87,51 @@ public class EditorController {
     ) {
         Block templateBlock = BlockFactory.createBlock(text, color, type);
 
-        // 按下模板時，建立新的積木 / When pressing a template, create a new block
         templateBlock.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
-
-            System.out.println("Pressed template block: " + text);
 
             draggingBlock = BlockFactory.createBlock(text, color, type);
 
             blocksLayer.getChildren().add(draggingBlock);
 
-            // 設定新積木的節點連線功能 / Set up node connection behavior for the new block
             setupArrowConnection(draggingBlock);
 
             draggingBlock.toFront();
 
-            // 讓積木中心對準滑鼠 / Make the block center align with the mouse
             draggingOffsetX = draggingBlock.getBlockWidth() / 2;
             draggingOffsetY = draggingBlock.getBlockHeight() / 2;
 
-            draggingBlock.setLayoutX(event.getSceneX() - draggingOffsetX);
-            draggingBlock.setLayoutY(event.getSceneY() - draggingOffsetY);
+            Point2D startPosition =
+                    getClampedBlockPosition(
+                            event.getSceneX(),
+                            event.getSceneY(),
+                            draggingBlock,
+                            draggingOffsetX,
+                            draggingOffsetY
+                    );
 
-            // 拖曳模板時，移動新建立的積木 / While dragging the template, move the new block
+            draggingBlock.setLayoutX(startPosition.getX());
+            draggingBlock.setLayoutY(startPosition.getY());
+
             sceneDragHandler = dragEvent -> {
 
                 if (draggingBlock != null) {
-                    draggingBlock.setLayoutX(dragEvent.getSceneX() - draggingOffsetX);
-                    draggingBlock.setLayoutY(dragEvent.getSceneY() - draggingOffsetY);
+
+                    Point2D dragPosition =
+                            getClampedBlockPosition(
+                                    dragEvent.getSceneX(),
+                                    dragEvent.getSceneY(),
+                                    draggingBlock,
+                                    draggingOffsetX,
+                                    draggingOffsetY
+                            );
+
+                    draggingBlock.setLayoutX(dragPosition.getX());
+                    draggingBlock.setLayoutY(dragPosition.getY());
+
                     draggingBlock.toFront();
                 }
             };
 
-            // 放開滑鼠時，確認積木是否在工作區內 / When released, check whether the block is inside the workspace
             sceneReleaseHandler = releaseEvent -> {
 
                 if (draggingBlock == null) {
@@ -123,23 +139,11 @@ public class EditorController {
                     return;
                 }
 
-                boolean insideWorkspace =
-                        draggingBlock.getBoundsInParent().intersects(
-                                workspace.getBoundsInParent()
-                        );
-
-                if (insideWorkspace) {
-
-                    // 讓放到工作區的積木可以再次拖曳 / Allow the block placed in the workspace to be dragged again
+                if (isMouseInsideWorkspace(releaseEvent)) {
                     enableDrag(draggingBlock);
-
-                    // 更新右邊結果區 / Update the right result area
                     updatePreview();
-
                 } else {
-
-                    // 如果不在工作區內，就刪除新積木 / If it is not inside the workspace, remove the new block
-                    blocksLayer.getChildren().remove(draggingBlock);
+                    removeBlock(draggingBlock);
                 }
 
                 draggingBlock = null;
@@ -147,7 +151,6 @@ public class EditorController {
                 removeTemporaryMouseHandlers();
             };
 
-            // 把拖曳和放開事件掛到整個畫面上 / Attach drag and release events to the whole root pane
             rootPane.addEventFilter(MouseEvent.MOUSE_DRAGGED, sceneDragHandler);
             rootPane.addEventFilter(MouseEvent.MOUSE_RELEASED, sceneReleaseHandler);
 
@@ -157,7 +160,6 @@ public class EditorController {
         return templateBlock;
     }
 
-    // 移除暫時的滑鼠事件 / Remove temporary mouse events
     private void removeTemporaryMouseHandlers() {
 
         if (sceneDragHandler != null) {
@@ -171,39 +173,47 @@ public class EditorController {
         }
     }
 
-    // 讓放到工作區的積木可以再次拖曳 / Allow blocks in the workspace to be dragged again
     private void enableDrag(Block block) {
 
         final double[] offset = new double[2];
 
-        // 按下工作區內的積木 / Press a block inside the workspace
         block.setOnMousePressed(event -> {
 
-            // 如果按到節點圓圈，就不要拖曳整個積木
-            // If the user presses a node circle, do not drag the whole block
             if (event.getTarget() instanceof Circle) {
                 return;
             }
 
             block.toFront();
 
-            offset[0] = event.getSceneX() - block.getLayoutX();
-            offset[1] = event.getSceneY() - block.getLayoutY();
+            Point2D workspacePoint =
+                    workspace.sceneToLocal(
+                            event.getSceneX(),
+                            event.getSceneY()
+                    );
+
+            offset[0] = workspacePoint.getX() - block.getLayoutX();
+            offset[1] = workspacePoint.getY() - block.getLayoutY();
 
             event.consume();
         });
 
-        // 拖曳工作區內的積木 / Drag a block inside the workspace
         block.setOnMouseDragged(event -> {
 
-            // 如果正在拖曳節點圓圈，就不要移動整個積木
-            // If the user is dragging a node circle, do not move the whole block
             if (event.getTarget() instanceof Circle) {
                 return;
             }
 
-            block.setLayoutX(event.getSceneX() - offset[0]);
-            block.setLayoutY(event.getSceneY() - offset[1]);
+            Point2D clampedPosition =
+                    getClampedBlockPosition(
+                            event.getSceneX(),
+                            event.getSceneY(),
+                            block,
+                            offset[0],
+                            offset[1]
+                    );
+
+            block.setLayoutX(clampedPosition.getX());
+            block.setLayoutY(clampedPosition.getY());
 
             updateBlockConnections(block);
             updatePreview();
@@ -211,11 +221,8 @@ public class EditorController {
             event.consume();
         });
 
-        // 雙擊刪除積木 / Double-click to delete a block
         block.setOnMouseClicked(event -> {
 
-            // 如果點到節點圓圈，不要刪除積木
-            // If the user clicks a node circle, do not delete the block
             if (event.getTarget() instanceof Circle) {
                 return;
             }
@@ -228,57 +235,106 @@ public class EditorController {
         });
     }
 
-    // 設定積木的輸出節點連線功能 / Set up connection behavior for block output nodes
-    private void setupArrowConnection(Block block) {
-        setupOutputNode(block.getOutputCircle());
-        setupOutputNode(block.getRightCircle());
+    private Point2D getClampedBlockPosition(
+            double sceneX,
+            double sceneY,
+            Block block,
+            double offsetX,
+            double offsetY
+    ) {
+        Point2D workspacePoint =
+                workspace.sceneToLocal(sceneX, sceneY);
+
+        double wantedX = workspacePoint.getX() - offsetX;
+        double wantedY = workspacePoint.getY() - offsetY;
+
+        double maxX = workspace.getWidth() - block.getBlockWidth();
+        double maxY = workspace.getHeight() - block.getBlockHeight();
+
+        double clampedX = clamp(wantedX, 0, maxX);
+        double clampedY = clamp(wantedY, 0, maxY);
+
+        return new Point2D(clampedX, clampedY);
     }
 
-    // 設定單一輸出節點的拉線功能 / Set up line dragging from one output node
+    private double clamp(
+            double value,
+            double minimum,
+            double maximum
+    ) {
+        if (maximum < minimum) {
+            return minimum;
+        }
+
+        return Math.max(minimum, Math.min(value, maximum));
+    }
+
+    private boolean isMouseInsideWorkspace(MouseEvent event) {
+
+        Bounds workspaceBounds =
+                workspace.localToScene(workspace.getBoundsInLocal());
+
+        return workspaceBounds.contains(
+                event.getSceneX(),
+                event.getSceneY()
+        );
+    }
+
+    private void setupArrowConnection(Block block) {
+
+        for (Circle outputNode : block.getOutputCircles()) {
+            setupOutputNode(outputNode);
+        }
+    }
+
     private void setupOutputNode(Circle outputNode) {
 
         if (outputNode == null) {
             return;
         }
 
-        // 從輸出節點開始拉線 / Start drawing a line from the output node
         outputNode.setOnMousePressed(event -> {
 
             tempLine = new Line();
-            startNode = outputNode;
 
-            double startX = startNode.localToScene(
-                    startNode.getCenterX(),
-                    startNode.getCenterY()
-            ).getX();
+            Point2D startPoint = arrowLayer.sceneToLocal(
+                    outputNode.localToScene(
+                            outputNode.getBoundsInLocal().getCenterX(),
+                            outputNode.getBoundsInLocal().getCenterY()
+                    )
+            );
 
-            double startY = startNode.localToScene(
-                    startNode.getCenterX(),
-                    startNode.getCenterY()
-            ).getY();
+            Point2D endPoint = arrowLayer.sceneToLocal(
+                    event.getSceneX(),
+                    event.getSceneY()
+            );
 
-            tempLine.setStartX(startX);
-            tempLine.setStartY(startY);
-            tempLine.setEndX(event.getSceneX());
-            tempLine.setEndY(event.getSceneY());
+            tempLine.setStartX(startPoint.getX());
+            tempLine.setStartY(startPoint.getY());
+            tempLine.setEndX(endPoint.getX());
+            tempLine.setEndY(endPoint.getY());
 
             arrowLayer.getChildren().add(tempLine);
 
             event.consume();
         });
 
-        // 拖曳時更新線的終點 / Update line endpoint while dragging
         outputNode.setOnMouseDragged(event -> {
 
             if (tempLine != null) {
-                tempLine.setEndX(event.getSceneX());
-                tempLine.setEndY(event.getSceneY());
+
+                Point2D endPoint = arrowLayer.sceneToLocal(
+                        event.getSceneX(),
+                        event.getSceneY()
+                );
+
+                tempLine.setEndX(endPoint.getX());
+                tempLine.setEndY(endPoint.getY());
             }
 
             event.consume();
         });
 
-        // 放開時檢查是否連到其他積木的輸入節點 / Check whether the line connects to another block input node
         outputNode.setOnMouseReleased(event -> {
 
             boolean connected = false;
@@ -295,40 +351,47 @@ public class EditorController {
                     continue;
                 }
 
-                Circle inputCircle = targetBlock.getInputCircle();
+                for (Circle targetInputCircle : targetBlock.getInputCircles()) {
 
-                if (inputCircle == null) {
-                    continue;
+                    if (targetInputCircle == null) {
+                        continue;
+                    }
+
+                    if (isInputCircleAlreadyConnected(targetBlock, targetInputCircle)) {
+                        continue;
+                    }
+
+                    if (targetInputCircle.localToScene(targetInputCircle.getBoundsInLocal())
+                            .contains(event.getSceneX(), event.getSceneY())) {
+
+                        Point2D endPoint = arrowLayer.sceneToLocal(
+                                targetInputCircle.localToScene(
+                                        targetInputCircle.getBoundsInLocal().getCenterX(),
+                                        targetInputCircle.getBoundsInLocal().getCenterY()
+                                )
+                        );
+
+                        tempLine.setEndX(endPoint.getX());
+                        tempLine.setEndY(endPoint.getY());
+
+                        Connection connection =
+                                new Connection(
+                                        sourceBlock,
+                                        targetBlock,
+                                        outputNode,
+                                        targetInputCircle,
+                                        tempLine
+                                );
+
+                        sourceBlock.getOutputs().add(connection);
+                        targetBlock.getInputs().add(connection);
+
+                        connected = true;
+                        break;
+                    }
                 }
 
-                if (inputCircle.localToScene(inputCircle.getBoundsInLocal())
-                        .contains(event.getSceneX(), event.getSceneY())) {
-
-                    double endX = inputCircle.localToScene(
-                            inputCircle.getCenterX(),
-                            inputCircle.getCenterY()
-                    ).getX();
-
-                    double endY = inputCircle.localToScene(
-                            inputCircle.getCenterX(),
-                            inputCircle.getCenterY()
-                    ).getY();
-
-                    tempLine.setEndX(endX);
-                    tempLine.setEndY(endY);
-
-                    Connection connection =
-                            new Connection(
-                                    sourceBlock,
-                                    targetBlock,
-                                    outputNode,
-                                    tempLine
-                            );
-
-                    sourceBlock.getOutputs().add(connection);
-                    targetBlock.getInputs().add(connection);
-
-                    connected = true;
+                if (connected) {
                     break;
                 }
             }
@@ -338,7 +401,6 @@ public class EditorController {
             }
 
             tempLine = null;
-            startNode = null;
 
             updatePreview();
 
@@ -346,18 +408,29 @@ public class EditorController {
         });
     }
 
-    // 更新某一個積木相關的連線 / Update all lines connected to a specific block
+    private boolean isInputCircleAlreadyConnected(
+            Block targetBlock,
+            Circle targetInputCircle
+    ) {
+        for (Connection connection : targetBlock.getInputs()) {
+            if (connection.getToCircle() == targetInputCircle) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private void updateBlockConnections(Block block) {
 
         block.getInputs().forEach(this::updateLine);
         block.getOutputs().forEach(this::updateLine);
     }
 
-    // 更新單一條連線的位置 / Update one connection line position
     private void updateLine(Connection connection) {
 
-        Circle outputCircle = connection.getFrom().getOutputCircle();
-        Circle inputCircle = connection.getTo().getInputCircle();
+        Circle outputCircle = connection.getFromCircle();
+        Circle inputCircle = connection.getToCircle();
 
         if (outputCircle == null || inputCircle == null) {
             return;
@@ -365,36 +438,27 @@ public class EditorController {
 
         Line line = connection.getLine();
 
-        line.setStartX(
+        Point2D startPoint = arrowLayer.sceneToLocal(
                 outputCircle.localToScene(
-                        outputCircle.getCenterX(),
-                        outputCircle.getCenterY()
-                ).getX()
+                        outputCircle.getBoundsInLocal().getCenterX(),
+                        outputCircle.getBoundsInLocal().getCenterY()
+                )
         );
 
-        line.setStartY(
-                outputCircle.localToScene(
-                        outputCircle.getCenterX(),
-                        outputCircle.getCenterY()
-                ).getY()
-        );
-
-        line.setEndX(
+        Point2D endPoint = arrowLayer.sceneToLocal(
                 inputCircle.localToScene(
-                        inputCircle.getCenterX(),
-                        inputCircle.getCenterY()
-                ).getX()
+                        inputCircle.getBoundsInLocal().getCenterX(),
+                        inputCircle.getBoundsInLocal().getCenterY()
+                )
         );
 
-        line.setEndY(
-                inputCircle.localToScene(
-                        inputCircle.getCenterX(),
-                        inputCircle.getCenterY()
-                ).getY()
-        );
+        line.setStartX(startPoint.getX());
+        line.setStartY(startPoint.getY());
+
+        line.setEndX(endPoint.getX());
+        line.setEndY(endPoint.getY());
     }
 
-    // 刪除積木以及所有相關連線 / Remove a block and all related connections
     private void removeBlock(Block block) {
 
         for (Connection connection :
@@ -427,7 +491,6 @@ public class EditorController {
         blocksLayer.getChildren().remove(block);
     }
 
-    // 更新右邊結果區的簡單資訊 / Update simple information in the right result area
     private void updatePreview() {
         int blockCount = blocksLayer.getChildren().size();
         resultLabel.setText("執行結果區\nBlocks: " + blockCount);

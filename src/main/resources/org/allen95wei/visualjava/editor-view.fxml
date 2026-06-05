@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
@@ -14,7 +15,7 @@
             prefHeight="700.0"
             style="-fx-background-color: linear-gradient(to bottom right, #E9FCFF, #86D9FF, #D8FFE8);">
 
-    <!-- 上方工具列 / Top toolbar: project title and main action buttons -->
+    <!-- 上方工具列 / Top toolbar -->
     <Pane fx:id="topBar"
           layoutX="0.0"
           layoutY="0.0"
@@ -23,10 +24,8 @@
           style="-fx-background-color:
                     linear-gradient(to bottom, rgba(255,255,255,0.90), rgba(255,255,255,0.45));
                  -fx-border-color: rgba(255,255,255,0.95);
-                 -fx-border-width: 0 0 2 0;
-                 -fx-effect: dropshadow(gaussian, rgba(0,150,255,0.25), 14, 0.3, 0, 2);">
+                 -fx-border-width: 0 0 1 0;">
 
-        <!-- 專案標題 / Project title -->
         <Label text="Visual Java Editor"
                layoutX="24.0"
                layoutY="13.0"
@@ -35,7 +34,6 @@
                       -fx-font-weight: bold;
                       -fx-text-fill: #0B4A6F;" />
 
-        <!-- 執行按鈕 / Run button: visual placeholder for future run function -->
         <Button text="Run"
                 layoutX="980.0"
                 layoutY="12.0"
@@ -53,7 +51,6 @@
                        -fx-border-color: white;
                        -fx-border-width: 1.5;" />
 
-        <!-- 儲存按鈕 / Save button: visual placeholder for future save function -->
         <Button text="Save"
                 layoutX="1070.0"
                 layoutY="12.0"
@@ -70,51 +67,76 @@
                        -fx-border-width: 1.5;" />
     </Pane>
 
-    <!-- 中間工作區 / Center workspace: white area for users to place blocks -->
+    <!-- 左邊工具欄捲動區 / Left toolbox scroll area -->
+    <ScrollPane fx:id="toolboxScrollPane"
+                layoutX="0.0"
+                layoutY="56.0"
+                prefWidth="200.0"
+                prefHeight="604.0"
+                fitToWidth="true"
+                hbarPolicy="NEVER"
+                vbarPolicy="AS_NEEDED"
+                pannable="true"
+                style="-fx-background: #FFFFFF;
+                       -fx-background-color: #FFFFFF;
+                       -fx-border-color: #7ADFFF;
+                       -fx-border-width: 0 1 0 0;">
+
+        <content>
+            <VBox fx:id="toolbox"
+                  spacing="14.0"
+                  prefWidth="180.0"
+                  style="-fx-background-color: #FFFFFF;
+                         -fx-padding: 16;" />
+        </content>
+    </ScrollPane>
+
+    <!-- 中間工作區 / Center workspace -->
     <Pane fx:id="workspace"
-          layoutX="220.0"
-          layoutY="70.0"
-          prefWidth="400.0"
-          prefHeight="570.0"
+          layoutX="200.0"
+          layoutY="56.0"
+          prefWidth="620.0"
+          prefHeight="604.0"
           style="-fx-background-color: #FFFFFF;
                  -fx-border-color: #7ADFFF;
-                 -fx-border-width: 0 2 0 2;" />
+                 -fx-border-width: 0 1 0 0;">
 
-    <!-- 右邊執行結果區 / Right result area: white area for showing execution results -->
+        <Pane fx:id="arrowLayer"
+              layoutX="0.0"
+              layoutY="0.0"
+              prefWidth="620.0"
+              prefHeight="604.0"
+              pickOnBounds="false"
+              style="-fx-background-color: transparent;" />
+
+        <Pane fx:id="blocksLayer"
+              layoutX="0.0"
+              layoutY="0.0"
+              prefWidth="620.0"
+              prefHeight="604.0"
+              pickOnBounds="false"
+              style="-fx-background-color: transparent;" />
+    </Pane>
+
+    <!-- 右邊執行結果區 / Right result area -->
     <Pane fx:id="resultPane"
-          layoutX="640.0"
-          layoutY="70.0"
-          prefWidth="500.0"
-          prefHeight="570.0"
-          style="-fx-background-color: #FFFFFF;
-                 -fx-border-color: #7ADFFF;
-                 -fx-border-width: 0 2 0 2;">
+          layoutX="820.0"
+          layoutY="56.0"
+          prefWidth="380.0"
+          prefHeight="604.0"
+          style="-fx-background-color: #FFFFFF;">
 
-        <!-- 執行結果標題 / Result title label -->
         <Label fx:id="resultLabel"
                text="執行結果區"
-               layoutX="170.0"
+               layoutX="120.0"
                layoutY="25.0"
                style="-fx-font-family: 'Segoe UI';
                       -fx-font-size: 24;
                       -fx-font-weight: bold;
                       -fx-text-fill: #0B4A6F;" />
-
     </Pane>
 
-    <!-- 左邊工具欄 / Left toolbox: area for block templates -->
-    <VBox fx:id="toolbox"
-          layoutX="0.0"
-          layoutY="70.0"
-          spacing="15.0"
-          prefWidth="200.0"
-          prefHeight="570.0"
-          style="-fx-background-color: #FFFFFF;
-                 -fx-border-color: #7ADFFF;
-                 -fx-border-width: 0 2 0 0;
-                 -fx-padding: 20;" />
-
-    <!-- 下方狀態列 / Bottom status bar: simple status information -->
+    <!-- 下方狀態列 / Bottom status bar -->
     <Pane fx:id="bottomBar"
           layoutX="0.0"
           layoutY="660.0"
@@ -123,9 +145,8 @@
           style="-fx-background-color:
                     linear-gradient(to bottom, rgba(255,255,255,0.55), rgba(255,255,255,0.85));
                  -fx-border-color: rgba(255,255,255,0.95);
-                 -fx-border-width: 2 0 0 0;">
+                 -fx-border-width: 1 0 0 0;">
 
-        <!-- 狀態文字 / Status text -->
         <Label text="Ready"
                layoutX="24.0"
                layoutY="10.0"
@@ -133,7 +154,6 @@
                       -fx-font-size: 14;
                       -fx-text-fill: #0B4A6F;" />
 
-        <!-- 縮放資訊 / Zoom information -->
         <Label text="Zoom: 100%"
                layoutX="1060.0"
                layoutY="10.0"
@@ -141,23 +161,5 @@
                       -fx-font-size: 14;
                       -fx-text-fill: #0B4A6F;" />
     </Pane>
-
-    <!-- 箭頭圖層 / Arrow layer: transparent layer for connection lines -->
-    <Pane fx:id="arrowLayer"
-          layoutX="0.0"
-          layoutY="0.0"
-          prefWidth="1200.0"
-          prefHeight="700.0"
-          pickOnBounds="false"
-          style="-fx-background-color: transparent;" />
-
-    <!-- 積木圖層 / Blocks layer: transparent layer for dragged blocks -->
-    <Pane fx:id="blocksLayer"
-          layoutX="0.0"
-          layoutY="0.0"
-          prefWidth="1200.0"
-          prefHeight="700.0"
-          pickOnBounds="false"
-          style="-fx-background-color: transparent;" />
 
 </AnchorPane>
