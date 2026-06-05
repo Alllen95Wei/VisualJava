@@ -419,6 +419,10 @@ public class Main extends Application {
                     from.getOutputs().add(connection);
                     target.getInputs().add(connection);
 
+                    if (from instanceof ProcessBlock process) {
+                        process.setNextBlock(target);
+                    }
+
                     // 鎖定此輸出端
                     outputNode.setDisable(true);
 
@@ -496,6 +500,10 @@ public class Main extends Application {
 
         for (Connection c :
                 new ArrayList<>(block.getInputs())) {
+
+            if (c.getFrom() instanceof ProcessBlock process) {
+                process.setNextBlock(null);
+            }
 
             // 恢復來源輸出端
             c.getFromNode().setDisable(false);

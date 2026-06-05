@@ -8,6 +8,16 @@ import javafx.scene.shape.Rectangle;
 
 public class ProcessBlock extends Block {
 
+    private Block nextBlock;
+
+    public Block getNextBlock() {
+        return nextBlock;
+    }
+
+    public void setNextBlock(Block nextBlock) {
+        this.nextBlock = nextBlock;
+    }
+
     public ProcessBlock(String text, Color color) {
 
         super(text, color);
