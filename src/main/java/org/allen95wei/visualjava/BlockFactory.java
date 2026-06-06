@@ -1,6 +1,9 @@
 package org.allen95wei.visualjava;
 
 import javafx.scene.paint.Color;
+import org.allen95wei.visualjava.AllBlock.*;
+import org.allen95wei.visualjava.AllBlock.ConditionBlock;
+import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 
 public class BlockFactory {
 

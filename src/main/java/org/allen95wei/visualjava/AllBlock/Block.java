@@ -1,4 +1,4 @@
-package org.allen95wei.visualjava;
+package org.allen95wei.visualjava.AllBlock;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -6,6 +6,8 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
+import org.allen95wei.visualjava.BlockType;
+import org.allen95wei.visualjava.Connection;
 
 import java.util.ArrayList;
 import java.util.LinkedList;

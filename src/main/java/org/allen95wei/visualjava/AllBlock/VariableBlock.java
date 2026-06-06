@@ -1,4 +1,4 @@
-package org.allen95wei.visualjava;
+package org.allen95wei.visualjava.AllBlock;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;

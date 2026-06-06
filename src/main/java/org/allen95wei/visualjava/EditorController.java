@@ -13,6 +13,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import org.allen95wei.visualjava.AllBlock.Block;
+import org.allen95wei.visualjava.AllBlock.ConditionBlock;
+import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
+import org.allen95wei.visualjava.AllBlock.ProcessBlock;
 
 import java.util.ArrayList;
 

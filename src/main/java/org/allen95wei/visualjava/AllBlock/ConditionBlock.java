@@ -1,11 +1,10 @@
-package org.allen95wei.visualjava;
+package org.allen95wei.visualjava.AllBlock;
 
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Polygon;
-import javafx.scene.shape.Rectangle;
 
 public class ConditionBlock extends Block {
 
