@@ -1,12 +1,28 @@
 package org.allen95wei.visualjava.AllBlock;
 
 import javafx.scene.paint.Color;
+
+import org.allen95wei.visualjava.BlockType;
+
 import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.*;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.*;
+
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AndBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.OrBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.NotBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.GreaterThanBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.LessThanBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.EqualBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AddBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.SubtractBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.MultiplyBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.DivideBlock;
+
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.SetBlock;
+
 import org.allen95wei.visualjava.AllBlock.AllVariableBlock.NumVariableBlock;
 import org.allen95wei.visualjava.AllBlock.AllVariableBlock.StringVariableBlock;
-import org.allen95wei.visualjava.BlockType;
 
 public class BlockFactory {
 
@@ -83,17 +99,19 @@ public class BlockFactory {
 
             // ===== Arithmetic blocks =====
             // 四則運算積木 / Arithmetic blocks
+            // 這四個符號是固定的，user 不能改文字
+            // These four symbols are fixed and cannot be edited by the user
             case ADD ->
-                    new AddBlock(text, color);
+                    new AddBlock();
 
             case SUBTRACT ->
-                    new SubtractBlock(text, color);
+                    new SubtractBlock();
 
             case MULTIPLY ->
-                    new MultiplyBlock(text, color);
+                    new MultiplyBlock();
 
             case DIVIDE ->
-                    new DivideBlock(text, color);
+                    new DivideBlock();
         };
 
         // 記錄積木種類，之後 backend 或判斷邏輯會用到

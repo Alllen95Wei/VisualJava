@@ -5,9 +5,9 @@ import org.allen95wei.visualjava.AllBlock.BinaryOperatorBlock;
 
 public class SubtractBlock extends BinaryOperatorBlock {
 
-    public SubtractBlock(String text, Color color) {
+    public SubtractBlock() {
 
-        // 減法 / Subtraction
+        // 減法符號固定為 - / Subtraction symbol is fixed as -
         super("-", Color.DARKORANGE);
     }
 }

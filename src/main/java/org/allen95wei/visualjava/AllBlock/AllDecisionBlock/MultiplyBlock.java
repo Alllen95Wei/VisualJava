@@ -5,9 +5,9 @@ import org.allen95wei.visualjava.AllBlock.BinaryOperatorBlock;
 
 public class MultiplyBlock extends BinaryOperatorBlock {
 
-    public MultiplyBlock(String text, Color color) {
+    public MultiplyBlock() {
 
-        // 乘法 / Multiplication
+        // 乘法符號固定為 × / Multiplication symbol is fixed as ×
         super("×", Color.DARKORANGE);
     }
 }

@@ -5,9 +5,9 @@ import org.allen95wei.visualjava.AllBlock.BinaryOperatorBlock;
 
 public class DivideBlock extends BinaryOperatorBlock {
 
-    public DivideBlock(String text, Color color) {
+    public DivideBlock() {
 
-        // 除法 / Division
+        // 除法符號固定為 ÷ / Division symbol is fixed as ÷
         super("÷", Color.DARKORANGE);
     }
 }
