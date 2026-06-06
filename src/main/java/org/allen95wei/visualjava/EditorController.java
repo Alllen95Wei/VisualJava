@@ -18,8 +18,7 @@ import org.allen95wei.visualjava.AllBlock.BlockFactory;
 import org.allen95wei.visualjava.AllBlock.ConditionBlock;
 import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.ProcessBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.*;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.ComparisonBlock;
 
 import java.util.ArrayList;
@@ -80,6 +79,7 @@ public class EditorController {
         toolbox.getChildren().addAll(
                 createTemplateBlock("開始", Color.RED, BlockType.START),
                 createTemplateBlock("列印", Color.LIGHTPINK, BlockType.PRINT),
+                createTemplateBlock("設定", Color.DARKGREY, BlockType.SET),
 
                 createTemplateBlock("如果", Color.YELLOW, BlockType.IF),
                 createTemplateBlock("非", Color.web("#19A9E2"), BlockType.NOT),
@@ -507,9 +507,65 @@ public class EditorController {
                                 cb.setRightOperand(targetBlock);
                             }
                         }
+                        if (sourceBlock instanceof SetBlock sb) {
+
+                            if (outputNode == sb.getUpperVariableCircle()) {
+                                sb.setVariableSource(targetBlock);
+                            }
+                            else if (outputNode == sb.getLowerValueCircle()) {
+                                sb.setValueSource(targetBlock);
+                            }
+                        }
+
+
                         // 鎖定黑色輸出節點，避免再拉第二條線
                         // Lock the black output node so it cannot create a second line
                         outputNode.setDisable(true);
+
+                        connected = true;
+                        break;
+                    }
+                }
+                // 🔵 檢查特殊「左側輸出節點」（像 SetBlock / ComparisonBlock）
+                for (Circle specialCircle : targetBlock.getOutputCircles()) {
+
+                    if (specialCircle == null) continue;
+
+                    if (specialCircle.localToScene(specialCircle.getBoundsInLocal())
+                            .contains(event.getSceneX(), event.getSceneY())) {
+
+                        // 👉 SetBlock
+                        if (targetBlock instanceof SetBlock sb) {
+
+                            if (specialCircle == sb.getUpperVariableCircle()) {
+                                sb.setVariableSource(sourceBlock);
+                            }
+                            else if (specialCircle == sb.getLowerValueCircle()) {
+                                sb.setValueSource(sourceBlock);
+                            }
+                        }
+
+                        // 👉 ComparisonBlock
+                        if (targetBlock instanceof ComparisonBlock cb) {
+
+                            if (specialCircle == cb.getUpperVariableCircle()) {
+                                cb.setLeftOperand(sourceBlock);
+                            }
+                            else if (specialCircle == cb.getLowerValueCircle()) {
+                                cb.setRightOperand(sourceBlock);
+                            }
+                        }
+
+                        // 線收尾（很重要）
+                        Point2D endPoint = arrowLayer.sceneToLocal(
+                                specialCircle.localToScene(
+                                        specialCircle.getBoundsInLocal().getCenterX(),
+                                        specialCircle.getBoundsInLocal().getCenterY()
+                                )
+                        );
+
+                        tempLine.setEndX(endPoint.getX());
+                        tempLine.setEndY(endPoint.getY());
 
                         connected = true;
                         break;

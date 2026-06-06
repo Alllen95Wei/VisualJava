@@ -4,6 +4,7 @@ public enum BlockType {
 
     START,
     PRINT,
+    SET,
 
     GREATER,
     LESS,

@@ -5,8 +5,7 @@ import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AndBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.OrBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.NotBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.*;
 import org.allen95wei.visualjava.BlockType;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.*;
 
@@ -49,6 +48,10 @@ public class BlockFactory {
 
             case PRINT ->
                     new PrintBlock(text, color);
+
+            case SET ->
+                    new SetBlock(text, color);
+
 
             case GREATER ->
                     new GreaterThanBlock(text, color);
