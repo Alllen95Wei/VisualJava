@@ -23,7 +23,7 @@ public class Main extends Application {
         FXMLLoader loader =
                 new FXMLLoader(
                         getClass()
-                                .getResource("editor.fxml")
+                                .getResource("editor-view.fxml")
                 );
 
         Scene scene =
