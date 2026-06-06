@@ -459,7 +459,12 @@ public class EditorController {
                                 conditionBlock.setNextBlockFalse(targetBlock);
                             }
                         }
+                        if (sourceBlock instanceof IfBlock ifBlock) {
 
+                            if (outputNode == ifBlock.getLeftOutputCircle()) {
+                                // 你的第三條分支
+                            }
+                        }
                         // 鎖定黑色輸出節點，避免再拉第二條線
                         // Lock the black output node so it cannot create a second line
                         outputNode.setDisable(true);

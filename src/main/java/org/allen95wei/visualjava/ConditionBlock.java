@@ -11,7 +11,6 @@ public class ConditionBlock extends Block {
 
     private Block nextBlockTrue;
     private Block nextBlockFalse;
-
     public Block getNextBlockTrue() {
         return nextBlockTrue;
     }
@@ -33,26 +32,19 @@ public class ConditionBlock extends Block {
 
         super(text, color);
 
-        Rectangle outer = new Rectangle(180, 70);
-
-        outer.setFill(color);
-        outer.setStroke(Color.BLACK);
-
-        Polygon inner = new Polygon(
-                50.0, 15.0,
-                130.0, 15.0,
-                160.0, 35.0,
-                130.0, 55.0,
-                50.0, 55.0,
-                20.0, 35.0
+        Polygon diamond = new Polygon(
+                50.0, 0.0,
+                100.0, 40.0,
+                50.0, 80.0,
+                0.0, 40.0
         );
 
-        inner.setFill(Color.WHITE);
-        inner.setStroke(Color.TRANSPARENT);
+        bg = diamond;
 
-        bg = outer;
+        bg.setFill(color);
+        bg.setStroke(Color.BLACK);
 
-        lockBlockSize(180, 70);
+        lockBlockSize(100, 80);
 
         inputCircle = new Circle(6);
         outputCircle = new Circle(6);
@@ -69,8 +61,7 @@ public class ConditionBlock extends Block {
         registerOutputCircle(rightCircle);
 
         getChildren().addAll(
-                outer,
-                inner,
+                bg,
                 inputCircle,
                 outputCircle,
                 rightCircle,
@@ -78,12 +69,12 @@ public class ConditionBlock extends Block {
         );
 
         StackPane.setAlignment(inputCircle, Pos.TOP_CENTER);
-        inputCircle.setTranslateY(-6);
+        inputCircle.setTranslateY(-5);
 
         StackPane.setAlignment(outputCircle, Pos.BOTTOM_CENTER);
-        outputCircle.setTranslateY(6);
+        outputCircle.setTranslateY(5);
 
         StackPane.setAlignment(rightCircle, Pos.CENTER_RIGHT);
-        rightCircle.setTranslateX(6);
+        rightCircle.setTranslateX(5);
     }
 }
