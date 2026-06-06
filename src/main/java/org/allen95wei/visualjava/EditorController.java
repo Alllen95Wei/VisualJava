@@ -16,11 +16,14 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import org.allen95wei.visualjava.AllBlock.Block;
 import org.allen95wei.visualjava.AllBlock.BlockFactory;
+import org.allen95wei.visualjava.AllBlock.BinaryOperatorBlock;
 import org.allen95wei.visualjava.AllBlock.ConditionBlock;
-import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.ProcessBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.*;
+import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.ComparisonBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.SetBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
 
 import java.util.ArrayList;
 
@@ -88,6 +91,13 @@ public class EditorController {
                 createTemplateBlock("字串變數", Color.LIGHTGREEN, BlockType.STRING_VARIABLE),
                 createTemplateBlock("數值變數", Color.LIGHTGREEN, BlockType.NUM_VARIABLE),
 
+                // 值與四則運算 / Value and arithmetic operators
+                createTemplateBlock("值", Color.LIGHTYELLOW, BlockType.VALUE),
+                createTemplateBlock("+", Color.DARKORANGE, BlockType.ADD),
+                createTemplateBlock("-", Color.DARKORANGE, BlockType.SUBTRACT),
+                createTemplateBlock("×", Color.DARKORANGE, BlockType.MULTIPLY),
+                createTemplateBlock("÷", Color.DARKORANGE, BlockType.DIVIDE),
+
                 createTemplateBlock("如果", Color.YELLOW, BlockType.IF),
                 createTemplateBlock("非", Color.web("#19A9E2"), BlockType.NOT),
                 createTemplateBlock("且", Color.web("#19A9E2"), BlockType.AND),
@@ -97,14 +107,12 @@ public class EditorController {
                 createTemplateBlock("小於", Color.web("#19A9E2"), BlockType.LESS),
                 createTemplateBlock("等於", Color.web("#19A9E2"), BlockType.EQUAL)
 
-                /*createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
+                /*
+                createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
                 createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
                 createTemplateBlock("變數", Color.LIGHTGREEN, BlockType.VARIABLE),
-                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION)*/
-
-
-
-
+                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION)
+                */
         );
 
         // 初始化右邊結果區文字 / Initialize result area text
@@ -121,9 +129,9 @@ public class EditorController {
 
         templateBlock.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
 
-            if (type == BlockType.START &&
-                    hasStartBlock()) {
-
+            // Start 積木只允許一個 / Only one Start block is allowed
+            if (type == BlockType.START && hasStartBlock()) {
+                event.consume();
                 return;
             }
 
@@ -132,6 +140,8 @@ public class EditorController {
 
             Block currentBlock = draggingBlock;
 
+            // 讓 VariableBlock 等積木可以呼叫自己的刪除功能
+            // Allows blocks such as VariableBlock to request deletion
             currentBlock.setDeleteAction(() ->
                     removeBlock(currentBlock)
             );
@@ -363,8 +373,8 @@ public class EditorController {
 
         outputNode.setOnMousePressed(event -> {
 
-            // 如果黑色輸出節點已經被鎖定，就不能再拉第二條線
-            // If the black output node is locked, do not create a second line
+            // 如果黑色/藍色輸出節點已經被鎖定，就不能再拉第二條線
+            // If the output node is locked, do not create a second line
             if (outputNode.isDisable()) {
                 event.consume();
                 return;
@@ -372,8 +382,8 @@ public class EditorController {
 
             Block sourceBlock = (Block) outputNode.getParent();
 
-            // 檢查這個黑色輸出節點是否已經有連線
-            // Check whether this black output node already has a connection
+            // 檢查這個輸出節點是否已經有連線
+            // Check whether this output node already has a connection
             if (isOutputCircleAlreadyConnected(sourceBlock, outputNode)) {
                 outputNode.setDisable(true);
                 event.consume();
@@ -447,13 +457,18 @@ public class EditorController {
                     continue;
                 }
 
+                // 先檢查一般白色 input node / First check normal white input nodes
                 for (Circle targetInputCircle : targetBlock.getInputCircles()) {
 
                     if (targetInputCircle == null) {
                         continue;
                     }
 
-
+                    // 一個白色輸入節點只能被接一次
+                    // One white input node can only be connected once
+                    if (isInputCircleAlreadyConnected(targetBlock, targetInputCircle)) {
+                        continue;
+                    }
 
                     if (targetInputCircle.localToScene(targetInputCircle.getBoundsInLocal())
                             .contains(event.getSceneX(), event.getSceneY())) {
@@ -480,96 +495,47 @@ public class EditorController {
                         sourceBlock.getOutputs().add(connection);
                         targetBlock.getInputs().add(connection);
 
-                        // 如果來源是 ProcessBlock，就記錄下一個積木
-                        // If the source is a ProcessBlock, record its next block
-                        if (sourceBlock instanceof ProcessBlock processBlock) {
-                            if (sourceBlock instanceof PrintBlock printBlock) {
+                        applyConnectionData(
+                                sourceBlock,
+                                targetBlock,
+                                outputNode
+                        );
 
-                                if (outputNode == printBlock.getLeftPrintCircle()) {
-                                    printBlock.setPrintTarget(targetBlock);
-                                } else {
-                                    printBlock.setNextBlock(targetBlock);
-                                }
-                            }
-                        }
-
-                        if (sourceBlock instanceof ConditionBlock conditionBlock) {
-
-                            if (outputNode == conditionBlock.getOutputCircle()) {
-
-                                conditionBlock.setNextBlockTrue(targetBlock);
-
-                            } else if (outputNode == conditionBlock.getRightCircle()) {
-
-                                conditionBlock.setNextBlockFalse(targetBlock);
-                            }
-                        }
-                        if (sourceBlock instanceof IfBlock ifBlock) {
-
-                            if (outputNode == ifBlock.getLeftOutputCircle()) {
-                                ifBlock.setNextBlockInput(targetBlock);
-                            }
-                        }
-
-                        if (sourceBlock instanceof ComparisonBlock cb) {
-
-                            if (outputNode == cb.getUpperVariableCircle()) {
-                                cb.setLeftOperand(targetBlock);
-                            }
-                            else if (outputNode == cb.getLowerValueCircle()) {
-                                cb.setRightOperand(targetBlock);
-                            }
-                        }
-                        if (sourceBlock instanceof SetBlock sb) {
-
-                            if (outputNode == sb.getUpperVariableCircle()) {
-                                sb.setVariableSource(targetBlock);
-                            }
-                            else if (outputNode == sb.getLowerValueCircle()) {
-                                sb.setValueSource(targetBlock);
-                            }
-                        }
-
-
-                        // 鎖定黑色輸出節點，避免再拉第二條線
-                        // Lock the black output node so it cannot create a second line
+                        // 鎖定輸出節點，避免再拉第二條線
+                        // Lock output node so it cannot create a second line
                         outputNode.setDisable(true);
 
                         connected = true;
                         break;
                     }
                 }
-                // 🔵 檢查特殊「左側輸出節點」（像 SetBlock / ComparisonBlock）
+
+                if (connected) {
+                    break;
+                }
+
+                /*
+                 * 特殊節點檢查 / Special node check
+                 *
+                 * SetBlock / ComparisonBlock / BinaryOperatorBlock 的左側藍色節點
+                 * 有時候會被當成「資料入口」使用。
+                 *
+                 * The blue nodes on SetBlock / ComparisonBlock / BinaryOperatorBlock
+                 * can sometimes act as data input points.
+                 */
                 for (Circle specialCircle : targetBlock.getOutputCircles()) {
 
-                    if (specialCircle == null) continue;
+                    if (specialCircle == null) {
+                        continue;
+                    }
+
+                    if (isTargetCircleAlreadyConnected(targetBlock, specialCircle)) {
+                        continue;
+                    }
 
                     if (specialCircle.localToScene(specialCircle.getBoundsInLocal())
                             .contains(event.getSceneX(), event.getSceneY())) {
 
-                        // 👉 SetBlock
-                        if (targetBlock instanceof SetBlock sb) {
-
-                            if (specialCircle == sb.getUpperVariableCircle()) {
-                                sb.setVariableSource(sourceBlock);
-                            }
-                            else if (specialCircle == sb.getLowerValueCircle()) {
-                                sb.setValueSource(sourceBlock);
-                            }
-                        }
-
-                        // 👉 ComparisonBlock
-                        if (targetBlock instanceof ComparisonBlock cb) {
-
-                            if (specialCircle == cb.getUpperVariableCircle()) {
-                                cb.setLeftOperand(sourceBlock);
-                            }
-                            else if (specialCircle == cb.getLowerValueCircle()) {
-                                cb.setRightOperand(sourceBlock);
-                            }
-                        }
-
-                        // 線收尾（很重要）
                         Point2D endPoint = arrowLayer.sceneToLocal(
                                 specialCircle.localToScene(
                                         specialCircle.getBoundsInLocal().getCenterX(),
@@ -579,6 +545,27 @@ public class EditorController {
 
                         tempLine.setEndX(endPoint.getX());
                         tempLine.setEndY(endPoint.getY());
+
+                        Connection connection =
+                                new Connection(
+                                        sourceBlock,
+                                        targetBlock,
+                                        outputNode,
+                                        specialCircle,
+                                        tempLine
+                                );
+
+                        sourceBlock.getOutputs().add(connection);
+                        targetBlock.getInputs().add(connection);
+
+                        applySpecialTargetData(
+                                sourceBlock,
+                                targetBlock,
+                                specialCircle
+                        );
+
+                        // 鎖定來源輸出節點 / Lock the source output node
+                        outputNode.setDisable(true);
 
                         connected = true;
                         break;
@@ -603,7 +590,109 @@ public class EditorController {
         });
     }
 
-    // 檢查黑色輸出節點是否已經有線 / Check whether an output circle already has a connection
+    // 連線成功後，根據來源積木和節點記錄資料關係
+    // After a connection succeeds, store data relation based on source block and output node
+    private void applyConnectionData(
+            Block sourceBlock,
+            Block targetBlock,
+            Circle outputNode
+    ) {
+        if (sourceBlock instanceof ProcessBlock processBlock) {
+
+            if (sourceBlock instanceof PrintBlock printBlock) {
+
+                if (outputNode == printBlock.getLeftPrintCircle()) {
+                    printBlock.setPrintTarget(targetBlock);
+                } else {
+                    printBlock.setNextBlock(targetBlock);
+                }
+
+            } else if (sourceBlock instanceof SetBlock setBlock) {
+
+                if (outputNode == setBlock.getUpperVariableCircle()) {
+                    setBlock.setVariableSource(targetBlock);
+                } else if (outputNode == setBlock.getLowerValueCircle()) {
+                    setBlock.setValueSource(targetBlock);
+                } else {
+                    processBlock.setNextBlock(targetBlock);
+                }
+
+            } else {
+                processBlock.setNextBlock(targetBlock);
+            }
+        }
+
+        if (sourceBlock instanceof ConditionBlock conditionBlock) {
+
+            if (outputNode == conditionBlock.getOutputCircle()) {
+                conditionBlock.setNextBlockTrue(targetBlock);
+            } else if (outputNode == conditionBlock.getRightCircle()) {
+                conditionBlock.setNextBlockFalse(targetBlock);
+            }
+        }
+
+        if (sourceBlock instanceof IfBlock ifBlock) {
+
+            if (outputNode == ifBlock.getLeftOutputCircle()) {
+                ifBlock.setNextBlockInput(targetBlock);
+            }
+        }
+
+        if (sourceBlock instanceof ComparisonBlock comparisonBlock) {
+
+            if (outputNode == comparisonBlock.getUpperVariableCircle()) {
+                comparisonBlock.setLeftOperand(targetBlock);
+            } else if (outputNode == comparisonBlock.getLowerValueCircle()) {
+                comparisonBlock.setRightOperand(targetBlock);
+            }
+        }
+
+        if (sourceBlock instanceof BinaryOperatorBlock operatorBlock) {
+
+            if (outputNode == operatorBlock.getLeftOperandCircle()) {
+                operatorBlock.setLeftOperand(targetBlock);
+            } else if (outputNode == operatorBlock.getRightOperandCircle()) {
+                operatorBlock.setRightOperand(targetBlock);
+            }
+        }
+    }
+
+    // 連到特殊節點時，根據目標積木和節點記錄資料關係
+    // When connecting to a special node, store data relation based on target block and target node
+    private void applySpecialTargetData(
+            Block sourceBlock,
+            Block targetBlock,
+            Circle specialCircle
+    ) {
+        if (targetBlock instanceof SetBlock setBlock) {
+
+            if (specialCircle == setBlock.getUpperVariableCircle()) {
+                setBlock.setVariableSource(sourceBlock);
+            } else if (specialCircle == setBlock.getLowerValueCircle()) {
+                setBlock.setValueSource(sourceBlock);
+            }
+        }
+
+        if (targetBlock instanceof ComparisonBlock comparisonBlock) {
+
+            if (specialCircle == comparisonBlock.getUpperVariableCircle()) {
+                comparisonBlock.setLeftOperand(sourceBlock);
+            } else if (specialCircle == comparisonBlock.getLowerValueCircle()) {
+                comparisonBlock.setRightOperand(sourceBlock);
+            }
+        }
+
+        if (targetBlock instanceof BinaryOperatorBlock operatorBlock) {
+
+            if (specialCircle == operatorBlock.getLeftOperandCircle()) {
+                operatorBlock.setLeftOperand(sourceBlock);
+            } else if (specialCircle == operatorBlock.getRightOperandCircle()) {
+                operatorBlock.setRightOperand(sourceBlock);
+            }
+        }
+    }
+
+    // 檢查輸出節點是否已經有線 / Check whether an output circle already has a connection
     private boolean isOutputCircleAlreadyConnected(
             Block sourceBlock,
             Circle outputCircle
@@ -625,22 +714,37 @@ public class EditorController {
         return false;
     }
 
-    // 檢查白色輸入節點是否已經有線 / Check whether an input circle already has a connection
-    private boolean isInputCircleAlreadyConnected(
+    // 檢查目標節點是否已經有線 / Check whether a target circle already has a connection
+    private boolean isTargetCircleAlreadyConnected(
             Block targetBlock,
-            Circle targetInputCircle
+            Circle targetCircle
     ) {
-        if (targetBlock == null || targetInputCircle == null) {
+        if (targetBlock == null || targetCircle == null) {
             return false;
         }
 
         for (Connection connection : targetBlock.getInputs()) {
-            if (connection.getToCircle() == targetInputCircle) {
+
+            Circle connectionInputCircle =
+                    getConnectionInputCircle(connection);
+
+            if (connectionInputCircle == targetCircle) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    // 檢查白色輸入節點是否已經有線 / Check whether an input circle already has a connection
+    private boolean isInputCircleAlreadyConnected(
+            Block targetBlock,
+            Circle targetInputCircle
+    ) {
+        return isTargetCircleAlreadyConnected(
+                targetBlock,
+                targetInputCircle
+        );
     }
 
     // 從 Connection 取得來源輸出節點 / Get source output circle from a connection
@@ -666,6 +770,10 @@ public class EditorController {
 
         if (connection.getToCircle() != null) {
             return connection.getToCircle();
+        }
+
+        if (connection.getToNode() != null) {
+            return connection.getToNode();
         }
 
         if (connection.getTo() != null) {
@@ -742,11 +850,7 @@ public class EditorController {
                     .getInputs()
                     .remove(connection);
 
-            // 如果來源是 ProcessBlock，清除 nextBlock
-            // If the source is ProcessBlock, clear nextBlock
-            if (connection.getFrom() instanceof ProcessBlock processBlock) {
-                processBlock.setNextBlock(null);
-            }
+            clearConnectionData(connection);
         }
 
         for (Connection connection :
@@ -763,37 +867,7 @@ public class EditorController {
                     .getOutputs()
                     .remove(connection);
 
-            // 如果來源是 ProcessBlock，清除 nextBlock
-            // If the source is ProcessBlock, clear nextBlock
-            if (connection.getFrom() instanceof ProcessBlock processBlock) {
-                processBlock.setNextBlock(null);
-            }
-
-            if (connection.getFrom() instanceof ConditionBlock conditionBlock) {
-
-                Circle outputCircle =
-                        getConnectionOutputCircle(connection);
-
-                if (outputCircle == conditionBlock.getOutputCircle()) {
-
-                    conditionBlock.setNextBlockTrue(null);
-
-                } else if (outputCircle == conditionBlock.getRightCircle()) {
-
-                    conditionBlock.setNextBlockFalse(null);
-                }
-
-            }
-            if (connection.getFrom() instanceof IfBlock ifBlock) {
-
-                Circle outputCircle =
-                        getConnectionOutputCircle(connection);
-
-                if (outputCircle == ifBlock.getLeftOutputCircle()) {
-
-                    ifBlock.setNextBlockInput(null);
-                }
-            }
+            clearConnectionData(connection);
         }
 
         block.getOutputs().clear();
@@ -802,12 +876,74 @@ public class EditorController {
         blocksLayer.getChildren().remove(block);
     }
 
+    // 清除連線儲存的邏輯關係 / Clear logical relation stored by a connection
+    private void clearConnectionData(Connection connection) {
+
+        Block sourceBlock = connection.getFrom();
+        Circle outputCircle = getConnectionOutputCircle(connection);
+
+        if (sourceBlock instanceof ProcessBlock processBlock) {
+            processBlock.setNextBlock(null);
+        }
+
+        if (sourceBlock instanceof PrintBlock printBlock) {
+
+            if (outputCircle == printBlock.getLeftPrintCircle()) {
+                printBlock.setPrintTarget(null);
+            }
+        }
+
+        if (sourceBlock instanceof SetBlock setBlock) {
+
+            if (outputCircle == setBlock.getUpperVariableCircle()) {
+                setBlock.setVariableSource(null);
+            } else if (outputCircle == setBlock.getLowerValueCircle()) {
+                setBlock.setValueSource(null);
+            }
+        }
+
+        if (sourceBlock instanceof ConditionBlock conditionBlock) {
+
+            if (outputCircle == conditionBlock.getOutputCircle()) {
+                conditionBlock.setNextBlockTrue(null);
+            } else if (outputCircle == conditionBlock.getRightCircle()) {
+                conditionBlock.setNextBlockFalse(null);
+            }
+        }
+
+        if (sourceBlock instanceof IfBlock ifBlock) {
+
+            if (outputCircle == ifBlock.getLeftOutputCircle()) {
+                ifBlock.setNextBlockInput(null);
+            }
+        }
+
+        if (sourceBlock instanceof ComparisonBlock comparisonBlock) {
+
+            if (outputCircle == comparisonBlock.getUpperVariableCircle()) {
+                comparisonBlock.setLeftOperand(null);
+            } else if (outputCircle == comparisonBlock.getLowerValueCircle()) {
+                comparisonBlock.setRightOperand(null);
+            }
+        }
+
+        if (sourceBlock instanceof BinaryOperatorBlock operatorBlock) {
+
+            if (outputCircle == operatorBlock.getLeftOperandCircle()) {
+                operatorBlock.setLeftOperand(null);
+            } else if (outputCircle == operatorBlock.getRightOperandCircle()) {
+                operatorBlock.setRightOperand(null);
+            }
+        }
+    }
+
     // 更新右邊結果區的簡單資訊 / Update simple information in the result area
     private void updatePreview() {
         int blockCount = blocksLayer.getChildren().size();
         resultLabel.setText("執行結果區\nBlocks: " + blockCount);
     }
 
+    // 檢查是否已經有 Start 積木 / Check whether a Start block already exists
     private boolean hasStartBlock() {
 
         for (var node : blocksLayer.getChildren()) {
