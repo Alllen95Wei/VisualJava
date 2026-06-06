@@ -19,6 +19,7 @@ import org.allen95wei.visualjava.AllBlock.ConditionBlock;
 import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.ProcessBlock;
 import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
 
 import java.util.ArrayList;
 
@@ -77,11 +78,12 @@ public class EditorController {
         // 建立左邊工具欄的模板積木 / Create template blocks in the left toolbox
         toolbox.getChildren().addAll(
                 createTemplateBlock("開始", Color.RED, BlockType.START),
+                createTemplateBlock("列印", Color.LIGHTPINK, BlockType.PRINT),
 
-                createTemplateBlock("IF", Color.YELLOW, BlockType.IF),
-                createTemplateBlock("NOT", Color.web("#19A9E2"), BlockType.NOT),
-                createTemplateBlock("AND", Color.web("#19A9E2"), BlockType.AND),
-                createTemplateBlock("OR", Color.web("#19A9E2"), BlockType.OR),
+                createTemplateBlock("如果", Color.YELLOW, BlockType.IF),
+                createTemplateBlock("非", Color.web("#19A9E2"), BlockType.NOT),
+                createTemplateBlock("且", Color.web("#19A9E2"), BlockType.AND),
+                createTemplateBlock("或", Color.web("#19A9E2"), BlockType.OR),
 
                 createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
                 createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
@@ -463,7 +465,14 @@ public class EditorController {
                         // 如果來源是 ProcessBlock，就記錄下一個積木
                         // If the source is a ProcessBlock, record its next block
                         if (sourceBlock instanceof ProcessBlock processBlock) {
-                            processBlock.setNextBlock(targetBlock);
+                            if (sourceBlock instanceof PrintBlock printBlock) {
+
+                                if (outputNode == printBlock.getLeftPrintCircle()) {
+                                    printBlock.setPrintTarget(targetBlock);
+                                } else {
+                                    printBlock.setNextBlock(targetBlock);
+                                }
+                            }
                         }
 
                         if (sourceBlock instanceof ConditionBlock conditionBlock) {

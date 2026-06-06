@@ -5,6 +5,7 @@ import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AndBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.OrBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.NotBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
 import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
 import org.allen95wei.visualjava.BlockType;
 
@@ -44,6 +45,9 @@ public class BlockFactory {
 
             case START ->
                     new StartBlock(text, color);
+
+            case PRINT ->
+                    new PrintBlock(text, color);
         };
 
         block.setBlockType(type);

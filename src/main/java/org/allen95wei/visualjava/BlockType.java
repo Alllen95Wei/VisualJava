@@ -3,6 +3,7 @@ package org.allen95wei.visualjava;
 public enum BlockType {
 
     START,
+    PRINT,
 
     DECISION,   // 判斷模塊
     PROCESS,    // 步驟模塊

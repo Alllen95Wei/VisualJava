@@ -11,7 +11,7 @@ public class StartBlock extends ProcessBlock {
     public StartBlock(String text, Color color)  {
 
         super(
-                "Start",
+                text,
                 Color.DARKGREEN
         );
 
