@@ -26,6 +26,7 @@
                  -fx-border-color: rgba(255,255,255,0.95);
                  -fx-border-width: 0 0 1 0;">
 
+        <!-- App title / 應用程式標題 -->
         <Label text="Visual Java Editor"
                layoutX="24.0"
                layoutY="13.0"
@@ -34,7 +35,11 @@
                       -fx-font-weight: bold;
                       -fx-text-fill: #0B4A6F;" />
 
+        <!-- Run button / 執行按鈕 -->
+        <!-- onAction 會呼叫 EditorController 裡的 handleRunBlocks() -->
+        <!-- onAction calls handleRunBlocks() inside EditorController -->
         <Button text="Run"
+                onAction="#handleRunBlocks"
                 layoutX="980.0"
                 layoutY="12.0"
                 prefWidth="80.0"
@@ -51,6 +56,8 @@
                        -fx-border-color: white;
                        -fx-border-width: 1.5;" />
 
+        <!-- Save button / 儲存按鈕 -->
+        <!-- 現在先只做 UI，功能之後再接 / UI only for now, function can be connected later -->
         <Button text="Save"
                 layoutX="1070.0"
                 layoutY="12.0"
@@ -83,6 +90,7 @@
                        -fx-border-width: 0 1 0 0;">
 
         <content>
+            <!-- 左邊積木工具欄 / Left block toolbox -->
             <VBox fx:id="toolbox"
                   spacing="14.0"
                   prefWidth="180.0"
@@ -99,23 +107,27 @@
                 prefHeight="604.0"
                 pannable="true"
                 fitToWidth="false"
-                fitToHeight="false">
+                fitToHeight="false"
+                style="-fx-background: #FFFFFF;
+                       -fx-background-color: #FFFFFF;">
 
         <content>
-
+            <!-- 實際可以放積木的工作區 / Actual workspace for blocks -->
             <Pane fx:id="workspace"
                   prefWidth="2000.0"
                   prefHeight="2000.0"
                   style="-fx-background-color: #FFFFFF;
-                     -fx-border-color: #7ADFFF;
-                     -fx-border-width: 0 1 0 0;">
+                         -fx-border-color: #7ADFFF;
+                         -fx-border-width: 0 1 0 0;">
 
+                <!-- 箭頭圖層：放連線 / Arrow layer: connection lines -->
                 <Pane fx:id="arrowLayer"
                       prefWidth="2000.0"
                       prefHeight="2000.0"
                       pickOnBounds="false"
                       style="-fx-background-color: transparent;" />
 
+                <!-- 積木圖層：放拖進來的積木 / Blocks layer: dragged blocks -->
                 <Pane fx:id="blocksLayer"
                       prefWidth="2000.0"
                       prefHeight="2000.0"
@@ -123,9 +135,7 @@
                       style="-fx-background-color: transparent;" />
 
             </Pane>
-
         </content>
-
     </ScrollPane>
 
     <!-- 右邊執行結果區 / Right result area -->
@@ -136,12 +146,16 @@
           prefHeight="604.0"
           style="-fx-background-color: #FFFFFF;">
 
+        <!-- 執行結果文字 / Run result text -->
         <Label fx:id="resultLabel"
                text="執行結果區"
-               layoutX="120.0"
+               layoutX="24.0"
                layoutY="25.0"
+               prefWidth="332.0"
+               prefHeight="540.0"
+               wrapText="true"
                style="-fx-font-family: 'Segoe UI';
-                      -fx-font-size: 24;
+                      -fx-font-size: 16;
                       -fx-font-weight: bold;
                       -fx-text-fill: #0B4A6F;" />
     </Pane>
@@ -157,6 +171,7 @@
                  -fx-border-color: rgba(255,255,255,0.95);
                  -fx-border-width: 1 0 0 0;">
 
+        <!-- 狀態文字 / Status text -->
         <Label text="Ready"
                layoutX="24.0"
                layoutY="10.0"
@@ -164,6 +179,7 @@
                       -fx-font-size: 14;
                       -fx-text-fill: #0B4A6F;" />
 
+        <!-- 縮放顯示 / Zoom display -->
         <Label text="Zoom: 100%"
                layoutX="1060.0"
                layoutY="10.0"

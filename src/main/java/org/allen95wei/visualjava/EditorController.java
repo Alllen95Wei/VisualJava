@@ -14,6 +14,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+
 import org.allen95wei.visualjava.AllBlock.Block;
 import org.allen95wei.visualjava.AllBlock.BlockFactory;
 import org.allen95wei.visualjava.AllBlock.BinaryOperatorBlock;
@@ -529,6 +530,10 @@ public class EditorController {
                         continue;
                     }
 
+                    if (!isSpecialDataCircle(targetBlock, specialCircle)) {
+                        continue;
+                    }
+
                     if (isTargetCircleAlreadyConnected(targetBlock, specialCircle)) {
                         continue;
                     }
@@ -588,6 +593,30 @@ public class EditorController {
 
             event.consume();
         });
+    }
+
+    // 判斷某個節點是不是資料用的特殊節點
+    // Check whether a circle is a special data circle
+    private boolean isSpecialDataCircle(
+            Block targetBlock,
+            Circle circle
+    ) {
+        if (targetBlock instanceof SetBlock setBlock) {
+            return circle == setBlock.getUpperVariableCircle()
+                    || circle == setBlock.getLowerValueCircle();
+        }
+
+        if (targetBlock instanceof ComparisonBlock comparisonBlock) {
+            return circle == comparisonBlock.getUpperVariableCircle()
+                    || circle == comparisonBlock.getLowerValueCircle();
+        }
+
+        if (targetBlock instanceof BinaryOperatorBlock operatorBlock) {
+            return circle == operatorBlock.getLeftOperandCircle()
+                    || circle == operatorBlock.getRightOperandCircle();
+        }
+
+        return false;
     }
 
     // 連線成功後，根據來源積木和節點記錄資料關係
@@ -868,6 +897,7 @@ public class EditorController {
                     .remove(connection);
 
             clearConnectionData(connection);
+            clearTargetConnectionData(connection);
         }
 
         block.getOutputs().clear();
@@ -876,7 +906,7 @@ public class EditorController {
         blocksLayer.getChildren().remove(block);
     }
 
-    // 清除連線儲存的邏輯關係 / Clear logical relation stored by a connection
+    // 清除來源積木儲存的邏輯關係 / Clear logical relation stored in source block
     private void clearConnectionData(Connection connection) {
 
         Block sourceBlock = connection.getFrom();
@@ -935,6 +965,56 @@ public class EditorController {
                 operatorBlock.setRightOperand(null);
             }
         }
+    }
+
+    // 清除目標積木儲存的資料關係 / Clear data relation stored in target block
+    private void clearTargetConnectionData(Connection connection) {
+
+        Block targetBlock = connection.getTo();
+        Circle inputCircle = getConnectionInputCircle(connection);
+
+        if (targetBlock instanceof SetBlock setBlock) {
+
+            if (inputCircle == setBlock.getUpperVariableCircle()) {
+                setBlock.setVariableSource(null);
+            } else if (inputCircle == setBlock.getLowerValueCircle()) {
+                setBlock.setValueSource(null);
+            }
+        }
+
+        if (targetBlock instanceof ComparisonBlock comparisonBlock) {
+
+            if (inputCircle == comparisonBlock.getUpperVariableCircle()) {
+                comparisonBlock.setLeftOperand(null);
+            } else if (inputCircle == comparisonBlock.getLowerValueCircle()) {
+                comparisonBlock.setRightOperand(null);
+            }
+        }
+
+        if (targetBlock instanceof BinaryOperatorBlock operatorBlock) {
+
+            if (inputCircle == operatorBlock.getLeftOperandCircle()) {
+                operatorBlock.setLeftOperand(null);
+            } else if (inputCircle == operatorBlock.getRightOperandCircle()) {
+                operatorBlock.setRightOperand(null);
+            }
+        }
+    }
+
+    // 執行目前工作區的積木 / Run blocks currently placed in the workspace
+    @FXML
+    private void handleRunBlocks() {
+
+        // 把 blocksLayer 裡面的所有積木交給 VisualBackendBridge 執行
+        // Send all blocks inside blocksLayer to VisualBackendBridge for execution
+        String runResult =
+                VisualBackendBridge.run(
+                        blocksLayer.getChildren()
+                );
+
+        // 把執行結果顯示在右側結果區
+        // Show execution result in the right result area
+        resultLabel.setText(runResult);
     }
 
     // 更新右邊結果區的簡單資訊 / Update simple information in the result area
