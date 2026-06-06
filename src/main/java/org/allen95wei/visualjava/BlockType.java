@@ -5,6 +5,10 @@ public enum BlockType {
     START,
     PRINT,
 
+    GREATER,
+    LESS,
+    EQUAL,
+
     DECISION,   // 判斷模塊
     PROCESS,    // 步驟模塊
     VARIABLE,   // 變數模塊

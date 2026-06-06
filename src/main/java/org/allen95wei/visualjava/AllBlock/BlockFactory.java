@@ -8,6 +8,7 @@ import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.NotBlock;
 import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
 import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
 import org.allen95wei.visualjava.BlockType;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.*;
 
 public class BlockFactory {
 
@@ -48,6 +49,13 @@ public class BlockFactory {
 
             case PRINT ->
                     new PrintBlock(text, color);
+
+            case GREATER ->
+                    new GreaterThanBlock(text, color);
+            case LESS ->
+                    new LessThanBlock(text, color);
+            case EQUAL ->
+                    new EqualBlock(text, color);
         };
 
         block.setBlockType(type);

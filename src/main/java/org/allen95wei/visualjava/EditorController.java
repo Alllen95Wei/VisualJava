@@ -20,6 +20,7 @@ import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.ProcessBlock;
 import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
 import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.ComparisonBlock;
 
 import java.util.ArrayList;
 
@@ -84,6 +85,10 @@ public class EditorController {
                 createTemplateBlock("非", Color.web("#19A9E2"), BlockType.NOT),
                 createTemplateBlock("且", Color.web("#19A9E2"), BlockType.AND),
                 createTemplateBlock("或", Color.web("#19A9E2"), BlockType.OR),
+
+                createTemplateBlock("大於", Color.web("#19A9E2"), BlockType.GREATER),
+                createTemplateBlock("小於", Color.web("#19A9E2"), BlockType.LESS),
+                createTemplateBlock("等於", Color.web("#19A9E2"), BlockType.EQUAL),
 
                 createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
                 createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
@@ -490,6 +495,16 @@ public class EditorController {
 
                             if (outputNode == ifBlock.getLeftOutputCircle()) {
                                 ifBlock.setNextBlockInput(targetBlock);
+                            }
+                        }
+
+                        if (sourceBlock instanceof ComparisonBlock cb) {
+
+                            if (outputNode == cb.getUpperVariableCircle()) {
+                                cb.setLeftOperand(targetBlock);
+                            }
+                            else if (outputNode == cb.getLowerValueCircle()) {
+                                cb.setRightOperand(targetBlock);
                             }
                         }
                         // 鎖定黑色輸出節點，避免再拉第二條線
