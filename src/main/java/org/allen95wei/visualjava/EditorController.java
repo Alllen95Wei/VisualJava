@@ -6,6 +6,7 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -45,6 +46,9 @@ public class EditorController {
 
     @FXML
     private Label resultLabel;
+
+    @FXML
+    private ScrollPane workspaceScrollPane;
 
     private Line tempLine;
 
@@ -91,12 +95,12 @@ public class EditorController {
 
                 createTemplateBlock("大於", Color.web("#19A9E2"), BlockType.GREATER),
                 createTemplateBlock("小於", Color.web("#19A9E2"), BlockType.LESS),
-                createTemplateBlock("等於", Color.web("#19A9E2"), BlockType.EQUAL),
+                createTemplateBlock("等於", Color.web("#19A9E2"), BlockType.EQUAL)
 
-                createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
+                /*createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
                 createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
                 createTemplateBlock("變數", Color.LIGHTGREEN, BlockType.VARIABLE),
-                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION)
+                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION)*/
 
 
 

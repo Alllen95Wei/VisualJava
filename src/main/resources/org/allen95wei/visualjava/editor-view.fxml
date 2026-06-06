@@ -92,31 +92,41 @@
     </ScrollPane>
 
     <!-- 中間工作區 / Center workspace -->
-    <Pane fx:id="workspace"
-          layoutX="200.0"
-          layoutY="56.0"
-          prefWidth="620.0"
-          prefHeight="604.0"
-          style="-fx-background-color: #FFFFFF;
-                 -fx-border-color: #7ADFFF;
-                 -fx-border-width: 0 1 0 0;">
+    <ScrollPane fx:id="workspaceScrollPane"
+                layoutX="200.0"
+                layoutY="56.0"
+                prefWidth="620.0"
+                prefHeight="604.0"
+                pannable="true"
+                fitToWidth="false"
+                fitToHeight="false">
 
-        <Pane fx:id="arrowLayer"
-              layoutX="0.0"
-              layoutY="0.0"
-              prefWidth="620.0"
-              prefHeight="604.0"
-              pickOnBounds="false"
-              style="-fx-background-color: transparent;" />
+        <content>
 
-        <Pane fx:id="blocksLayer"
-              layoutX="0.0"
-              layoutY="0.0"
-              prefWidth="620.0"
-              prefHeight="604.0"
-              pickOnBounds="false"
-              style="-fx-background-color: transparent;" />
-    </Pane>
+            <Pane fx:id="workspace"
+                  prefWidth="2000.0"
+                  prefHeight="2000.0"
+                  style="-fx-background-color: #FFFFFF;
+                     -fx-border-color: #7ADFFF;
+                     -fx-border-width: 0 1 0 0;">
+
+                <Pane fx:id="arrowLayer"
+                      prefWidth="2000.0"
+                      prefHeight="2000.0"
+                      pickOnBounds="false"
+                      style="-fx-background-color: transparent;" />
+
+                <Pane fx:id="blocksLayer"
+                      prefWidth="2000.0"
+                      prefHeight="2000.0"
+                      pickOnBounds="false"
+                      style="-fx-background-color: transparent;" />
+
+            </Pane>
+
+        </content>
+
+    </ScrollPane>
 
     <!-- 右邊執行結果區 / Right result area -->
     <Pane fx:id="resultPane"
