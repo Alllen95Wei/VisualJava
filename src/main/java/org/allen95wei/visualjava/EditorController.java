@@ -126,6 +126,12 @@ public class EditorController {
             // 從模板建立新積木 / Create a new block from the template
             draggingBlock = BlockFactory.createBlock(text, color, type);
 
+            Block currentBlock = draggingBlock;
+
+            currentBlock.setDeleteAction(() ->
+                    removeBlock(currentBlock)
+            );
+
             blocksLayer.getChildren().add(draggingBlock);
 
             // 設定新積木的節點連線功能 / Set up node connection behavior for the new block

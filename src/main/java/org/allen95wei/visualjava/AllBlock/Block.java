@@ -143,4 +143,16 @@ public abstract class Block extends StackPane {
     public void setBlockText(String text) {
         label.setText(text);
     }
+
+    private Runnable deleteAction;
+
+    public void setDeleteAction(Runnable deleteAction) {
+        this.deleteAction = deleteAction;
+    }
+
+    protected void requestDelete() {
+        if (deleteAction != null) {
+            deleteAction.run();
+        }
+    }
 }

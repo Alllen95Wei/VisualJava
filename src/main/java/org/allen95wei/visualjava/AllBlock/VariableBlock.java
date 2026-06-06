@@ -1,6 +1,9 @@
 package org.allen95wei.visualjava.AllBlock;
 
 import javafx.geometry.Pos;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -52,6 +55,18 @@ public class VariableBlock extends Block {
         textField.setOnMousePressed(e -> this.fireEvent(e));
         textField.setOnMouseDragged(e -> this.fireEvent(e));
         textField.setOnMouseReleased(e -> this.fireEvent(e));
+        this.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                deleteSelf();
+            }
+        });
+
+        textField.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                deleteSelf();
+                e.consume();
+            }
+        });
 
         getChildren().addAll(
                 bg,
@@ -74,4 +89,19 @@ public class VariableBlock extends Block {
     public Circle getInputCircle() {
         return inputCircle;
     }
+    private void deleteSelf() {
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setHeaderText("刪除變數");
+        alert.setContentText("確定要刪除這個變數嗎？");
+
+        alert.showAndWait().ifPresent(result -> {
+
+            if (result == ButtonType.OK) {
+                requestDelete();
+            }
+
+        });
+    }
+
 }

@@ -96,4 +96,5 @@ public class Connection {
     public Circle getToCircle() {
         return toCircle;
     }
+    
 }
