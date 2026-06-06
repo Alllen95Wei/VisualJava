@@ -14,9 +14,11 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import org.allen95wei.visualjava.AllBlock.Block;
+import org.allen95wei.visualjava.AllBlock.BlockFactory;
 import org.allen95wei.visualjava.AllBlock.ConditionBlock;
 import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
 import org.allen95wei.visualjava.AllBlock.ProcessBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
 
 import java.util.ArrayList;
 
@@ -74,15 +76,21 @@ public class EditorController {
 
         // 建立左邊工具欄的模板積木 / Create template blocks in the left toolbox
         toolbox.getChildren().addAll(
-                createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
-                createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
-                createTemplateBlock("變數", Color.LIGHTGREEN, BlockType.VARIABLE),
-                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION),
+                createTemplateBlock("開始", Color.RED, BlockType.START),
 
                 createTemplateBlock("IF", Color.YELLOW, BlockType.IF),
                 createTemplateBlock("NOT", Color.web("#19A9E2"), BlockType.NOT),
                 createTemplateBlock("AND", Color.web("#19A9E2"), BlockType.AND),
-                createTemplateBlock("OR", Color.web("#19A9E2"), BlockType.OR)
+                createTemplateBlock("OR", Color.web("#19A9E2"), BlockType.OR),
+
+                createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
+                createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
+                createTemplateBlock("變數", Color.LIGHTGREEN, BlockType.VARIABLE),
+                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION)
+
+
+
+
         );
 
         // 初始化右邊結果區文字 / Initialize result area text
@@ -98,6 +106,12 @@ public class EditorController {
         Block templateBlock = BlockFactory.createBlock(text, color, type);
 
         templateBlock.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+
+            if (type == BlockType.START &&
+                    hasStartBlock()) {
+
+                return;
+            }
 
             // 從模板建立新積木 / Create a new block from the template
             draggingBlock = BlockFactory.createBlock(text, color, type);
@@ -466,7 +480,7 @@ public class EditorController {
                         if (sourceBlock instanceof IfBlock ifBlock) {
 
                             if (outputNode == ifBlock.getLeftOutputCircle()) {
-                                // 你的第三條分支
+                                ifBlock.setNextBlockInput(targetBlock);
                             }
                         }
                         // 鎖定黑色輸出節點，避免再拉第二條線
@@ -675,6 +689,17 @@ public class EditorController {
 
                     conditionBlock.setNextBlockFalse(null);
                 }
+
+            }
+            if (connection.getFrom() instanceof IfBlock ifBlock) {
+
+                Circle outputCircle =
+                        getConnectionOutputCircle(connection);
+
+                if (outputCircle == ifBlock.getLeftOutputCircle()) {
+
+                    ifBlock.setNextBlockInput(null);
+                }
             }
         }
 
@@ -688,5 +713,17 @@ public class EditorController {
     private void updatePreview() {
         int blockCount = blocksLayer.getChildren().size();
         resultLabel.setText("執行結果區\nBlocks: " + blockCount);
+    }
+
+    private boolean hasStartBlock() {
+
+        for (var node : blocksLayer.getChildren()) {
+
+            if (node instanceof StartBlock) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

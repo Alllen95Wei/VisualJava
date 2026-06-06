@@ -1,9 +1,12 @@
-package org.allen95wei.visualjava;
+package org.allen95wei.visualjava.AllBlock;
 
 import javafx.scene.paint.Color;
-import org.allen95wei.visualjava.AllBlock.*;
-import org.allen95wei.visualjava.AllBlock.ConditionBlock;
 import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AndBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.OrBlock;
+import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.NotBlock;
+import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
+import org.allen95wei.visualjava.BlockType;
 
 public class BlockFactory {
 
@@ -38,6 +41,9 @@ public class BlockFactory {
 
             case NOT ->
                     new NotBlock(text, color);
+
+            case START ->
+                    new StartBlock(text, color);
         };
 
         block.setBlockType(type);

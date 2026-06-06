@@ -5,10 +5,12 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import org.allen95wei.visualjava.AllBlock.ConditionBlock;
+import org.allen95wei.visualjava.AllBlock.Block;
 
 public class IfBlock extends ConditionBlock {
 
     private Circle leftOutputCircle;
+    private Block nextBlockInput;
 
     public IfBlock(String text, Color color) {
 
@@ -33,5 +35,13 @@ public class IfBlock extends ConditionBlock {
 
     public Circle getLeftOutputCircle() {
         return leftOutputCircle;
+    }
+
+    public Block getNextBlockInput() {
+        return nextBlockInput;
+    }
+
+    public void setNextBlockInput(Block nextBlockInput) {
+        this.nextBlockInput = nextBlockInput;
     }
 }
