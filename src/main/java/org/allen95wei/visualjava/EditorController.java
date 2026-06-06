@@ -81,6 +81,9 @@ public class EditorController {
                 createTemplateBlock("列印", Color.LIGHTPINK, BlockType.PRINT),
                 createTemplateBlock("設定", Color.DARKGREY, BlockType.SET),
 
+                createTemplateBlock("字串變數", Color.LIGHTGREEN, BlockType.STRING_VARIABLE),
+                createTemplateBlock("數值變數", Color.LIGHTGREEN, BlockType.NUM_VARIABLE),
+
                 createTemplateBlock("如果", Color.YELLOW, BlockType.IF),
                 createTemplateBlock("非", Color.web("#19A9E2"), BlockType.NOT),
                 createTemplateBlock("且", Color.web("#19A9E2"), BlockType.AND),

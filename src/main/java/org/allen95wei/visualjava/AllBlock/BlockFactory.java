@@ -6,6 +6,8 @@ import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AndBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.OrBlock;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.NotBlock;
 import org.allen95wei.visualjava.AllBlock.AllProcessBlock.*;
+import org.allen95wei.visualjava.AllBlock.AllVariableBlock.NumVariableBlock;
+import org.allen95wei.visualjava.AllBlock.AllVariableBlock.StringVariableBlock;
 import org.allen95wei.visualjava.BlockType;
 import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.*;
 
@@ -59,6 +61,10 @@ public class BlockFactory {
                     new LessThanBlock(text, color);
             case EQUAL ->
                     new EqualBlock(text, color);
+            case STRING_VARIABLE ->
+                    new StringVariableBlock(text, color);
+            case NUM_VARIABLE  ->
+                    new NumVariableBlock(text, color);
         };
 
         block.setBlockType(type);
