@@ -415,11 +415,7 @@ public class EditorController {
                         continue;
                     }
 
-                    // 一個白色輸入節點只能被接一次
-                    // One white input node can only be connected once
-                    if (isInputCircleAlreadyConnected(targetBlock, targetInputCircle)) {
-                        continue;
-                    }
+
 
                     if (targetInputCircle.localToScene(targetInputCircle.getBoundsInLocal())
                             .contains(event.getSceneX(), event.getSceneY())) {
@@ -450,6 +446,18 @@ public class EditorController {
                         // If the source is a ProcessBlock, record its next block
                         if (sourceBlock instanceof ProcessBlock processBlock) {
                             processBlock.setNextBlock(targetBlock);
+                        }
+
+                        if (sourceBlock instanceof ConditionBlock conditionBlock) {
+
+                            if (outputNode == conditionBlock.getOutputCircle()) {
+
+                                conditionBlock.setNextBlockTrue(targetBlock);
+
+                            } else if (outputNode == conditionBlock.getRightCircle()) {
+
+                                conditionBlock.setNextBlockFalse(targetBlock);
+                            }
                         }
 
                         // 鎖定黑色輸出節點，避免再拉第二條線
@@ -643,6 +651,21 @@ public class EditorController {
             // If the source is ProcessBlock, clear nextBlock
             if (connection.getFrom() instanceof ProcessBlock processBlock) {
                 processBlock.setNextBlock(null);
+            }
+
+            if (connection.getFrom() instanceof ConditionBlock conditionBlock) {
+
+                Circle outputCircle =
+                        getConnectionOutputCircle(connection);
+
+                if (outputCircle == conditionBlock.getOutputCircle()) {
+
+                    conditionBlock.setNextBlockTrue(null);
+
+                } else if (outputCircle == conditionBlock.getRightCircle()) {
+
+                    conditionBlock.setNextBlockFalse(null);
+                }
             }
         }
 
