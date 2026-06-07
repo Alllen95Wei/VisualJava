@@ -12,10 +12,10 @@ import org.allen95wei.visualjava.block.decision.NotBlock;
 import org.allen95wei.visualjava.block.decision.GreaterThanBlock;
 import org.allen95wei.visualjava.block.decision.LessThanBlock;
 import org.allen95wei.visualjava.block.decision.EqualBlock;
-import org.allen95wei.visualjava.block.decision.AddBlock;
-import org.allen95wei.visualjava.block.decision.SubtractBlock;
-import org.allen95wei.visualjava.block.decision.MultiplyBlock;
-import org.allen95wei.visualjava.block.decision.DivideBlock;
+import org.allen95wei.visualjava.block.arithmetic.AddBlock;
+import org.allen95wei.visualjava.block.arithmetic.SubtractBlock;
+import org.allen95wei.visualjava.block.arithmetic.MultiplyBlock;
+import org.allen95wei.visualjava.block.arithmetic.DivideBlock;
 
 import org.allen95wei.visualjava.block.process.EndIfBlock;
 import org.allen95wei.visualjava.block.process.StartBlock;

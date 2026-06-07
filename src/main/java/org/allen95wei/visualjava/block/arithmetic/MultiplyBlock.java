@@ -1,4 +1,4 @@
-package org.allen95wei.visualjava.block.decision;
+package org.allen95wei.visualjava.block.arithmetic;
 
 import javafx.scene.paint.Color;
 import org.allen95wei.visualjava.block.BinaryOperatorBlock;

@@ -14,4 +14,6 @@ module org.allen95wei.visualjava {
     opens org.allen95wei.visualjava.block.decision to javafx.fxml;
     exports org.allen95wei.visualjava.block.variable;
     opens org.allen95wei.visualjava.block.variable to javafx.fxml;
+    exports org.allen95wei.visualjava.block.arithmetic;
+    opens org.allen95wei.visualjava.block.arithmetic to javafx.fxml;
 }
