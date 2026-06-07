@@ -17,6 +17,7 @@ import org.allen95wei.visualjava.block.decision.SubtractBlock;
 import org.allen95wei.visualjava.block.decision.MultiplyBlock;
 import org.allen95wei.visualjava.block.decision.DivideBlock;
 
+import org.allen95wei.visualjava.block.process.EndIfBlock;
 import org.allen95wei.visualjava.block.process.StartBlock;
 import org.allen95wei.visualjava.block.process.PrintBlock;
 import org.allen95wei.visualjava.block.process.SetBlock;
@@ -52,6 +53,9 @@ public class BlockFactory {
             // 邏輯與條件積木 / Logic and condition blocks
             case IF ->
                     new IfBlock(text, color);
+
+            case ENDIF ->
+                    new EndIfBlock(text, color);
 
             case AND ->
                     new AndBlock(text, color);

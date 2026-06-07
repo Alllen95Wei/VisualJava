@@ -32,6 +32,7 @@ public enum BlockType {
     // ===== Logic blocks =====
     // 邏輯積木 / Logic blocks
     IF,             // 如果 / If block
+    ENDIF,
     AND,            // 且 / AND logic block
     OR,             // 或 / OR logic block
     NOT,            // 非 / NOT logic block

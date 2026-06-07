@@ -87,7 +87,7 @@ public class EditorController {
         toolbox.getChildren().addAll(
                 createTemplateBlock("開始", Color.RED, BlockType.START),
                 createTemplateBlock("列印", Color.LIGHTPINK, BlockType.PRINT),
-                createTemplateBlock("設定", Color.DARKGREY, BlockType.SET),
+                createTemplateBlock("賦值", Color.DARKGREY, BlockType.SET),
 
                 createTemplateBlock("字串變數", Color.LIGHTGREEN, BlockType.STRING_VARIABLE),
                 createTemplateBlock("數值變數", Color.LIGHTGREEN, BlockType.NUM_VARIABLE),
@@ -100,6 +100,7 @@ public class EditorController {
                 createTemplateBlock("÷", Color.DARKORANGE, BlockType.DIVIDE),
 
                 createTemplateBlock("如果", Color.YELLOW, BlockType.IF),
+                createTemplateBlock("如果結束", Color.YELLOW, BlockType.ENDIF),
                 createTemplateBlock("非", Color.web("#19A9E2"), BlockType.NOT),
                 createTemplateBlock("且", Color.web("#19A9E2"), BlockType.AND),
                 createTemplateBlock("或", Color.web("#19A9E2"), BlockType.OR),
