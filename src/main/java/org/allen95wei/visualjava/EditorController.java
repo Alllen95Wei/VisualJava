@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
@@ -53,6 +54,25 @@ public class EditorController {
 
     @FXML
     private ScrollPane workspaceScrollPane;
+
+    @FXML
+    private ScrollPane toolboxScrollPane;
+
+    @FXML
+    private Button toolboxToggleButton;
+
+    private boolean toolboxVisible = true;
+
+    private static final double TOOLBOX_OPEN_X = 0.0;
+    private static final double TOOLBOX_CLOSED_X = -200.0;
+    private static final double TOOLBOX_WIDTH = 200.0;
+
+    private static final double TOGGLE_BUTTON_OPEN_X = 188.0;
+    private static final double TOGGLE_BUTTON_CLOSED_X = 0.0;
+    private static final double TOGGLE_BUTTON_WIDTH = 24.0;
+
+    private static final double WORKSPACE_OPEN_X = 200.0;
+    private static final double WORKSPACE_CLOSED_X = 24.0;
 
     private Line tempLine;
 
@@ -119,6 +139,12 @@ public class EditorController {
 
         // 初始化右邊結果區文字 / Initialize result area text
         resultLabel.setText("執行結果區");
+
+        // 初始化左側積木工具欄狀態 / Initialize the left block toolbox state
+        setToolboxVisible(true);
+
+        // 讓滑動按鈕保持在最上層 / Keep the sliding button on top
+        toolboxToggleButton.toFront();
     }
 
     // 建立工具欄模板積木 / Create a template block for the toolbox
@@ -1000,6 +1026,67 @@ public class EditorController {
                 operatorBlock.setRightOperand(null);
             }
         }
+    }
+
+    // 收合或展開左側積木工具欄
+    // Collapse or expand the left block toolbox
+    @FXML
+    private void handleToggleToolbox() {
+
+        // 切換狀態 / Toggle state
+        setToolboxVisible(!toolboxVisible);
+    }
+
+    // 統一管理左側工具欄開關狀態
+    // Manage the toolbox open/closed state in one place
+    private void setToolboxVisible(boolean visible) {
+
+        toolboxVisible = visible;
+
+        if (toolboxVisible) {
+
+            /*
+             * 工具欄打開狀態 / Toolbox opened:
+             *
+             * [ toolbox ][ > ][ workspace ][ result ]
+             */
+            toolboxScrollPane.setLayoutX(TOOLBOX_OPEN_X);
+            toolboxToggleButton.setLayoutX(TOGGLE_BUTTON_OPEN_X);
+
+            workspaceScrollPane.setLayoutX(WORKSPACE_OPEN_X);
+            workspaceScrollPane.setPrefWidth(
+                    resultPane.getLayoutX() - TOOLBOX_WIDTH
+            );
+
+        } else {
+
+            /*
+             * 工具欄收合狀態 / Toolbox collapsed:
+             *
+             * [ > ][ wider workspace ][ result ]
+             */
+            toolboxScrollPane.setLayoutX(TOOLBOX_CLOSED_X);
+            toolboxToggleButton.setLayoutX(TOGGLE_BUTTON_CLOSED_X);
+
+            workspaceScrollPane.setLayoutX(WORKSPACE_CLOSED_X);
+            workspaceScrollPane.setPrefWidth(
+                    resultPane.getLayoutX() - TOGGLE_BUTTON_WIDTH
+            );
+        }
+
+        /*
+         * 按鈕文字固定為 ">"。
+         * Button text stays as ">".
+         *
+         * 這符合目前 UI 概念：按一下滑走，再按一下滑回來。
+         * This matches the current UI concept: press once to slide away,
+         * press again to slide back.
+         */
+        toolboxToggleButton.setText(">");
+
+        // 按鈕永遠留在最上層，避免被 workspace 或其他 pane 蓋住
+        // Keep button on top so it is not covered by workspace or other panes
+        toolboxToggleButton.toFront();
     }
 
     // 執行目前工作區的積木 / Run blocks currently placed in the workspace

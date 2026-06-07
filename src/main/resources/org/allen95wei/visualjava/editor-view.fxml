@@ -99,6 +99,26 @@
         </content>
     </ScrollPane>
 
+    <!-- 左側積木工具欄滑動按鈕 / Sliding button for the left block toolbox -->
+    <!-- 按一下收合，再按一下展開 / Press once to collapse, press again to expand -->
+    <Button fx:id="toolboxToggleButton"
+            text=">"
+            onAction="#handleToggleToolbox"
+            layoutX="188.0"
+            layoutY="328.0"
+            prefWidth="24.0"
+            prefHeight="60.0"
+            style="-fx-font-family: 'Segoe UI';
+                   -fx-font-size: 16;
+                   -fx-font-weight: bold;
+                   -fx-text-fill: white;
+                   -fx-background-color:
+                       linear-gradient(to bottom, #72ECFF, #1F9BFF);
+                   -fx-background-radius: 0 14 14 0;
+                   -fx-border-radius: 0 14 14 0;
+                   -fx-border-color: white;
+                   -fx-border-width: 1;" />
+
     <!-- 中間工作區 / Center workspace -->
     <ScrollPane fx:id="workspaceScrollPane"
                 layoutX="200.0"
