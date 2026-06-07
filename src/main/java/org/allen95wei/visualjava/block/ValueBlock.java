@@ -1,4 +1,4 @@
-package org.allen95wei.visualjava.AllBlock;
+package org.allen95wei.visualjava.block;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.TextField;

@@ -1,7 +1,7 @@
-package org.allen95wei.visualjava.AllBlock.AllDecisionBlock;
+package org.allen95wei.visualjava.block.decision;
 
 import javafx.scene.paint.Color;
-import org.allen95wei.visualjava.AllBlock.BinaryOperatorBlock;
+import org.allen95wei.visualjava.block.BinaryOperatorBlock;
 
 public class SubtractBlock extends BinaryOperatorBlock {
 

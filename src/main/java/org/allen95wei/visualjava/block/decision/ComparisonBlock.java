@@ -1,11 +1,11 @@
-package org.allen95wei.visualjava.AllBlock.AllDecisionBlock;
+package org.allen95wei.visualjava.block.decision;
 
 import javafx.geometry.Pos;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import org.allen95wei.visualjava.AllBlock.Block;
-import org.allen95wei.visualjava.AllBlock.DecisionBlock;
+import org.allen95wei.visualjava.block.Block;
+import org.allen95wei.visualjava.block.DecisionBlock;
 
 public class ComparisonBlock extends DecisionBlock {
 

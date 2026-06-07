@@ -1,7 +1,7 @@
-package org.allen95wei.visualjava.AllBlock.AllVariableBlock;
+package org.allen95wei.visualjava.block.variable;
 
 import javafx.scene.paint.Color;
-import org.allen95wei.visualjava.AllBlock.VariableBlock;
+import org.allen95wei.visualjava.block.VariableBlock;
 
 public class StringVariableBlock extends VariableBlock {
 

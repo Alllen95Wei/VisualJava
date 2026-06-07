@@ -3,17 +3,17 @@ package org.allen95wei.visualjava;
 import javafx.scene.Node;
 import javafx.scene.shape.Circle;
 
-import org.allen95wei.visualjava.AllBlock.Block;
-import org.allen95wei.visualjava.AllBlock.BinaryOperatorBlock;
-import org.allen95wei.visualjava.AllBlock.ConditionBlock;
-import org.allen95wei.visualjava.AllBlock.ProcessBlock;
-import org.allen95wei.visualjava.AllBlock.ValueBlock;
-import org.allen95wei.visualjava.AllBlock.VariableBlock;
-import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.ComparisonBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.SetBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
+import org.allen95wei.visualjava.block.Block;
+import org.allen95wei.visualjava.block.BinaryOperatorBlock;
+import org.allen95wei.visualjava.block.ConditionBlock;
+import org.allen95wei.visualjava.block.ProcessBlock;
+import org.allen95wei.visualjava.block.ValueBlock;
+import org.allen95wei.visualjava.block.VariableBlock;
+import org.allen95wei.visualjava.block.condition.IfBlock;
+import org.allen95wei.visualjava.block.decision.ComparisonBlock;
+import org.allen95wei.visualjava.block.process.PrintBlock;
+import org.allen95wei.visualjava.block.process.SetBlock;
+import org.allen95wei.visualjava.block.process.StartBlock;
 
 import org.allen95wei.visualjava.coderunner.core.ExecutionContext;
 import org.allen95wei.visualjava.coderunner.core.Store;

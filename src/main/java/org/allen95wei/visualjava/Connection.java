@@ -2,7 +2,7 @@ package org.allen95wei.visualjava;
 
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import org.allen95wei.visualjava.AllBlock.Block;
+import org.allen95wei.visualjava.block.Block;
 
 public class Connection {
 

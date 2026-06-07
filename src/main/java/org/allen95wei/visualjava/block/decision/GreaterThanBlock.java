@@ -1,4 +1,4 @@
-package org.allen95wei.visualjava.AllBlock.AllDecisionBlock;
+package org.allen95wei.visualjava.block.decision;
 
 import javafx.scene.paint.Color;
 

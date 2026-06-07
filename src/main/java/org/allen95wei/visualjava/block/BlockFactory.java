@@ -1,28 +1,28 @@
-package org.allen95wei.visualjava.AllBlock;
+package org.allen95wei.visualjava.block;
 
 import javafx.scene.paint.Color;
 
 import org.allen95wei.visualjava.BlockType;
 
-import org.allen95wei.visualjava.AllBlock.AllConditionBlock.IfBlock;
+import org.allen95wei.visualjava.block.condition.IfBlock;
 
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AndBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.OrBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.NotBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.GreaterThanBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.LessThanBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.EqualBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.AddBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.SubtractBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.MultiplyBlock;
-import org.allen95wei.visualjava.AllBlock.AllDecisionBlock.DivideBlock;
+import org.allen95wei.visualjava.block.decision.AndBlock;
+import org.allen95wei.visualjava.block.decision.OrBlock;
+import org.allen95wei.visualjava.block.decision.NotBlock;
+import org.allen95wei.visualjava.block.decision.GreaterThanBlock;
+import org.allen95wei.visualjava.block.decision.LessThanBlock;
+import org.allen95wei.visualjava.block.decision.EqualBlock;
+import org.allen95wei.visualjava.block.decision.AddBlock;
+import org.allen95wei.visualjava.block.decision.SubtractBlock;
+import org.allen95wei.visualjava.block.decision.MultiplyBlock;
+import org.allen95wei.visualjava.block.decision.DivideBlock;
 
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.StartBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.PrintBlock;
-import org.allen95wei.visualjava.AllBlock.AllProcessBlock.SetBlock;
+import org.allen95wei.visualjava.block.process.StartBlock;
+import org.allen95wei.visualjava.block.process.PrintBlock;
+import org.allen95wei.visualjava.block.process.SetBlock;
 
-import org.allen95wei.visualjava.AllBlock.AllVariableBlock.NumVariableBlock;
-import org.allen95wei.visualjava.AllBlock.AllVariableBlock.StringVariableBlock;
+import org.allen95wei.visualjava.block.variable.NumVariableBlock;
+import org.allen95wei.visualjava.block.variable.StringVariableBlock;
 
 public class BlockFactory {
 

@@ -1,4 +1,4 @@
-package org.allen95wei.visualjava.AllBlock;
+package org.allen95wei.visualjava.block;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polygon;
