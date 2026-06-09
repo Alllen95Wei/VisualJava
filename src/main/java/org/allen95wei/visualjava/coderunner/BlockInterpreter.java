@@ -1,163 +1,637 @@
 package org.allen95wei.visualjava.coderunner;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javafx.scene.Node;
-import org.allen95wei.visualjava.block.*;
+
+import org.allen95wei.visualjava.BlockType;
+import org.allen95wei.visualjava.Connection;
+
+import org.allen95wei.visualjava.block.BinaryOperatorBlock;
+import org.allen95wei.visualjava.block.Block;
+import org.allen95wei.visualjava.block.ProcessBlock;
+import org.allen95wei.visualjava.block.ValueBlock;
+import org.allen95wei.visualjava.block.VariableBlock;
+
 import org.allen95wei.visualjava.block.condition.IfBlock;
+import org.allen95wei.visualjava.block.decision.ComparisonBlock;
+import org.allen95wei.visualjava.block.process.EndIfBlock;
 import org.allen95wei.visualjava.block.process.PrintBlock;
 import org.allen95wei.visualjava.block.process.SetBlock;
 import org.allen95wei.visualjava.block.process.StartBlock;
 import org.allen95wei.visualjava.block.variable.NumVariableBlock;
 import org.allen95wei.visualjava.block.variable.StringVariableBlock;
+
+import org.allen95wei.visualjava.coderunner.core.Condition;
+import org.allen95wei.visualjava.coderunner.core.ExecutionContext;
 import org.allen95wei.visualjava.coderunner.core.Flow;
 import org.allen95wei.visualjava.coderunner.core.Step;
-import org.allen95wei.visualjava.coderunner.core.arithmetic.*;
+
+import org.allen95wei.visualjava.coderunner.core.arithmetic.AddStep;
+import org.allen95wei.visualjava.coderunner.core.arithmetic.ArithmeticStep;
+import org.allen95wei.visualjava.coderunner.core.arithmetic.DivideStep;
+import org.allen95wei.visualjava.coderunner.core.arithmetic.MultiplyStep;
+import org.allen95wei.visualjava.coderunner.core.arithmetic.SubtractStep;
+
+import org.allen95wei.visualjava.coderunner.core.condition.logics.AndCondition;
+import org.allen95wei.visualjava.coderunner.core.condition.logics.NotCondition;
+import org.allen95wei.visualjava.coderunner.core.condition.logics.OrCondition;
+import org.allen95wei.visualjava.coderunner.core.condition.relations.EqualToCondition;
+import org.allen95wei.visualjava.coderunner.core.condition.relations.GreaterThanCondition;
+import org.allen95wei.visualjava.coderunner.core.condition.relations.LessThanCondition;
+
 import org.allen95wei.visualjava.coderunner.core.control.SetStep;
 import org.allen95wei.visualjava.coderunner.core.output.PrintStep;
 
+import java.util.ArrayList;
+import java.util.List;
 
 public class BlockInterpreter {
-    public static Flow run(List<Node> blocks) {
+
+    /*
+     * BlockInterpreter 的用途 / Purpose of BlockInterpreter:
+     *
+     * 把使用者在 UI 上拉出來的 visual blocks 轉成 backend 的 Flow / Step。
+     * Convert visual blocks created in the UI into backend Flow / Step objects.
+     *
+     * 目前先支援 / Currently supported:
+     * START, SET, PRINT, VALUE, VARIABLE,
+     * +, -, ×, ÷,
+     * GREATER, LESS, EQUAL,
+     * AND, OR, NOT as printable/evaluable conditions.
+     *
+     * 目前先不處理 / Not handled yet:
+     * IF and ENDIF branch execution.
+     *
+     * 注意 / Note:
+     * START 只是流程入口，不應該被轉成 Step。
+     * START is only the entry point. It should not be converted into a Step.
+     */
+
+    public static Flow run(List<Node> nodes) {
+
         Flow mainFlow = new Flow();
 
-        ProcessBlock next = null;
+        StartBlock startBlock = findStartBlock(nodes);
 
-        // Get the StartBlock
-        for (var block: blocks) {
-            if (block instanceof StartBlock) next = (ProcessBlock) block;
+        if (startBlock == null) {
+            throw new IllegalArgumentException("No StartBlock found in the blocks list.");
         }
-        if (next == null) throw new IllegalArgumentException("No StartBlock found in the blocks list.");
 
-        while (true) {
-            mainFlow.addStep(blockToStep(next));
-            if (next.getNextBlock() != null) next = (ProcessBlock) next.getNextBlock();
-            else break;
+        /*
+         * 從 StartBlock 的下一個 block 開始。
+         * Start from the block after StartBlock.
+         */
+        Block currentBlock = startBlock.getNextBlock();
+
+        while (currentBlock != null) {
+
+            if (currentBlock instanceof IfBlock) {
+                throw new UnsupportedOperationException(
+                        "IF is not supported by BlockInterpreter yet."
+                );
+            }
+
+            if (currentBlock instanceof EndIfBlock endIfBlock) {
+
+                /*
+                 * ENDIF 目前先當作 pass-through。
+                 * For now, ENDIF is treated as pass-through.
+                 */
+                currentBlock = endIfBlock.getNextBlock();
+                continue;
+            }
+
+            Step step = blockToStep(currentBlock);
+            mainFlow.addStep(step);
+
+            if (currentBlock instanceof ProcessBlock processBlock) {
+                currentBlock = processBlock.getNextBlock();
+            } else {
+                currentBlock = null;
+            }
         }
 
         return mainFlow;
     }
 
-    public static Step blockToStep(Block block) {
-        Step step = new SetStep("dummy", "dummy"); // Placeholder, will be overwritten in switch
-        switch (block) {
-            case PrintBlock pBlock -> {
-                Block printTarget = pBlock.getPrintTarget();
-                if (printTarget instanceof ValueBlock vBlock) {
-                    step = new PrintStep(vBlock.getValue());
-                } else if (printTarget instanceof VariableBlock vBlock) {
-                    step = new PrintStep(vBlock.getValue(), true);
-                } else {
-                    throw new IllegalArgumentException("Block type is not printable: " + printTarget.getClass().getSimpleName());
-                }
-            }
-            case SetBlock sBlock -> {
-                Block varSource = sBlock.getVariableSource();
-                Block valSource = sBlock.getValueSource();
+    private static StartBlock findStartBlock(List<Node> nodes) {
 
-                if (varSource instanceof NumVariableBlock numVarBlock) {
-                    step = switch (valSource) {
-                        case ValueBlock valBlock ->
-                                new SetStep(numVarBlock.getValue(), Double.valueOf(valBlock.getValue()));
-                        case VariableBlock varBlock -> new SetStep(numVarBlock.getValue(), varBlock.getValue(), true);
-                        case BinaryOperatorBlock binOpBlock ->
-                                new SetStep(numVarBlock.getValue(), (ArithmeticStep) blockToStep(binOpBlock));
-                        default ->
-                                throw new IllegalArgumentException("Undefined value source type: " + valSource.getClass().getSimpleName());
-                    };
-                } else if (varSource instanceof StringVariableBlock strVarBlock) {
-                    step = switch (valSource) {
-                        case ValueBlock valBlock -> new SetStep(strVarBlock.getValue(), valBlock.getValue());
-                        case VariableBlock varBlock -> new SetStep(strVarBlock.getValue(), varBlock.getValue(), true);
-                        default -> throw new IllegalArgumentException("Undefined value source type: " + valSource.getClass().getSimpleName());
-                    };
-                } else {
-                    throw new IllegalArgumentException("Undefined variable source type: " + varSource.getClass().getSimpleName());
-                }
+        for (Node node : nodes) {
+            if (node instanceof StartBlock startBlock) {
+                return startBlock;
             }
-            case BinaryOperatorBlock binOpBlock -> {
-                String operator = binOpBlock.getBlockText();
-                Block leftBlock = binOpBlock.getLeftOperand();
-                Block rightBlock = binOpBlock.getRightOperand();
-                String leftKey = null, rightKey = null;
-                Double leftVal = null, rightVal = null;
-
-                if (leftBlock instanceof VariableBlock leftValBlock) {
-                    // left operand is a variable
-                    leftKey = leftValBlock.getValue();
-                } else if (leftBlock instanceof ValueBlock leftValBlock) {
-                    // left operand is a value
-                    leftVal = Double.valueOf(leftValBlock.getValue());
-                } else {
-                    throw new IllegalArgumentException("Undefined left operand type: " + leftBlock.getClass().getSimpleName());
-                }
-                if (rightBlock instanceof VariableBlock rightValBlock) {
-                    // left operand is a variable
-                    rightKey = rightValBlock.getValue();
-                } else if (rightBlock instanceof ValueBlock rightValBlock) {
-                    // left operand is a value
-                    rightVal = Double.valueOf(rightValBlock.getValue());
-                } else {
-                    throw new IllegalArgumentException("Undefined right operand type: " + rightBlock.getClass().getSimpleName());
-                }
-
-                switch (operator) {
-                    case "+" -> {
-                        if (leftKey != null && rightKey != null) {
-                            step = new AddStep(leftKey, rightKey);
-                        } else if (leftKey != null) {
-                            step = new AddStep(leftKey, rightVal);
-                        } else if (rightKey != null) {
-                            step = new AddStep(leftVal, rightKey);
-                        } else {
-                            step = new AddStep(leftVal, rightVal);
-                        }
-                    }
-                    case "-" -> {
-                        if (leftKey != null && rightKey != null) {
-                            step = new SubtractStep(leftKey, rightKey);
-                        } else if (leftKey != null) {
-                            step = new SubtractStep(leftKey, rightVal);
-                        } else if (rightKey != null) {
-                            step = new SubtractStep(leftVal, rightKey);
-                        } else {
-                            step = new SubtractStep(leftVal, rightVal);
-                        }
-                    }
-                    case "*" -> {
-                        if (leftKey != null && rightKey != null) {
-                            step = new MultiplyStep(leftKey, rightKey);
-                        } else if (leftKey != null) {
-                            step = new MultiplyStep(leftKey, rightVal);
-                        } else if (rightKey != null) {
-                            step = new MultiplyStep(leftVal, rightKey);
-                        } else {
-                            step = new MultiplyStep(leftVal, rightVal);
-                        }
-                    }
-                    case "/" -> {
-                        if (leftKey != null && rightKey != null) {
-                            step = new DivideStep(leftKey, rightKey);
-                        } else if (leftKey != null) {
-                            step = new DivideStep(leftKey, rightVal);
-                        } else if (rightKey != null) {
-                            step = new DivideStep(leftVal, rightKey);
-                        } else {
-                            step = new DivideStep(leftVal, rightVal);
-                        }
-                    }
-                    default -> throw new IllegalArgumentException("Undefined operator: " + operator);
-                }
-            }
-            case IfBlock ifBlock -> {
-            }
-            case DecisionBlock decisionBlock -> {
-
-            }
-            default -> throw new IllegalArgumentException("Undefined block type: " + block.getClass().getSimpleName());
         }
 
-        return step;
+        return null;
+    }
+
+    public static Step blockToStep(Block block) {
+
+        if (block instanceof PrintBlock printBlock) {
+            return printBlockToStep(printBlock);
+        }
+
+        if (block instanceof SetBlock setBlock) {
+            return setBlockToStep(setBlock);
+        }
+
+        if (block instanceof BinaryOperatorBlock binaryOperatorBlock) {
+            return arithmeticBlockToStep(binaryOperatorBlock);
+        }
+
+        if (block instanceof ComparisonBlock || isLogicBlock(block)) {
+
+            /*
+             * Condition block 如果被當成流程 Step，暫時輸出 true/false。
+             * If a condition block is used as a flow Step, print its boolean result for now.
+             */
+            Condition condition = blockToCondition(block);
+
+            return new Step() {
+                @Override
+                public void execute() {
+                    execute(new ExecutionContext());
+                }
+
+                @Override
+                public void execute(ExecutionContext context) {
+                    System.out.println(condition.evaluate(context));
+                }
+            };
+        }
+
+        throw new IllegalArgumentException(
+                "Undefined block type: " + block.getClass().getSimpleName()
+        );
+    }
+
+    private static Step printBlockToStep(PrintBlock printBlock) {
+
+        Block printTarget = printBlock.getPrintTarget();
+
+        if (printTarget == null) {
+            throw new IllegalArgumentException("PrintBlock has no print target.");
+        }
+
+        if (printTarget instanceof ValueBlock valueBlock) {
+
+            /*
+             * 直接列印 literal value。
+             * Print literal value directly.
+             */
+            return new PrintStep(valueBlock.getValue());
+        }
+
+        if (printTarget instanceof VariableBlock variableBlock) {
+
+            /*
+             * 列印變數。
+             * Print variable by context key.
+             *
+             * "%s" 是格式，variableBlock.getValue() 是變數名稱。
+             * "%s" is the format, variableBlock.getValue() is the variable name.
+             */
+            return new PrintStep("%s", variableBlock.getValue());
+        }
+
+        if (printTarget instanceof BinaryOperatorBlock binaryOperatorBlock) {
+
+            /*
+             * 列印 arithmetic expression 的計算結果。
+             * Print calculated result of an arithmetic expression.
+             */
+            ArithmeticStep arithmeticStep = arithmeticBlockToStep(binaryOperatorBlock);
+
+            return new Step() {
+                @Override
+                public void execute() {
+                    execute(new ExecutionContext());
+                }
+
+                @Override
+                public void execute(ExecutionContext context) {
+                    System.out.println(arithmeticStep.calculate(context));
+                }
+            };
+        }
+
+        if (printTarget instanceof ComparisonBlock || isLogicBlock(printTarget)) {
+
+            /*
+             * 列印 condition 的 true / false。
+             * Print true / false result of a condition.
+             */
+            Condition condition = blockToCondition(printTarget);
+
+            return new Step() {
+                @Override
+                public void execute() {
+                    execute(new ExecutionContext());
+                }
+
+                @Override
+                public void execute(ExecutionContext context) {
+                    System.out.println(condition.evaluate(context));
+                }
+            };
+        }
+
+        throw new IllegalArgumentException(
+                "Block type is not printable: " + printTarget.getClass().getSimpleName()
+        );
+    }
+
+    private static Step setBlockToStep(SetBlock setBlock) {
+
+        Block variableSource = setBlock.getVariableSource();
+        Block valueSource = setBlock.getValueSource();
+
+        if (!(variableSource instanceof VariableBlock variableBlock)) {
+            throw new IllegalArgumentException("SetBlock variable source must be a VariableBlock.");
+        }
+
+        String variableName = variableBlock.getValue();
+
+        if (variableName == null || variableName.isBlank()) {
+            throw new IllegalArgumentException("Variable name cannot be empty.");
+        }
+
+        if (valueSource == null) {
+            throw new IllegalArgumentException("SetBlock has no value source.");
+        }
+
+        if (variableSource instanceof NumVariableBlock) {
+            return createNumberSetStep(variableName, valueSource);
+        }
+
+        if (variableSource instanceof StringVariableBlock) {
+            return createStringSetStep(variableName, valueSource);
+        }
+
+        /*
+         * 舊版 VariableBlock 預設當成字串變數。
+         * Old VariableBlock is treated as a string variable by default.
+         */
+        return createStringSetStep(variableName, valueSource);
+    }
+
+    private static Step createNumberSetStep(
+            String variableName,
+            Block valueSource
+    ) {
+        if (valueSource instanceof ValueBlock valueBlock) {
+            return new SetStep(
+                    variableName,
+                    parseNumber(valueBlock.getValue())
+            );
+        }
+
+        if (valueSource instanceof VariableBlock variableBlock) {
+            return new SetStep(
+                    variableName,
+                    variableBlock.getValue(),
+                    true
+            );
+        }
+
+        if (valueSource instanceof BinaryOperatorBlock binaryOperatorBlock) {
+            return new SetStep(
+                    variableName,
+                    arithmeticBlockToStep(binaryOperatorBlock)
+            );
+        }
+
+        throw new IllegalArgumentException(
+                "Undefined number value source type: " + valueSource.getClass().getSimpleName()
+        );
+    }
+
+    private static Step createStringSetStep(
+            String variableName,
+            Block valueSource
+    ) {
+        if (valueSource instanceof ValueBlock valueBlock) {
+            return new SetStep(
+                    variableName,
+                    valueBlock.getValue()
+            );
+        }
+
+        if (valueSource instanceof VariableBlock variableBlock) {
+            return new SetStep(
+                    variableName,
+                    variableBlock.getValue(),
+                    true
+            );
+        }
+
+        throw new IllegalArgumentException(
+                "Undefined string value source type: " + valueSource.getClass().getSimpleName()
+        );
+    }
+
+    public static ArithmeticStep arithmeticBlockToStep(BinaryOperatorBlock binaryOperatorBlock) {
+
+        Object leftOperand =
+                valueBlockToArithmeticOperand(
+                        binaryOperatorBlock.getLeftOperand(),
+                        "left"
+                );
+
+        Object rightOperand =
+                valueBlockToArithmeticOperand(
+                        binaryOperatorBlock.getRightOperand(),
+                        "right"
+                );
+
+        return createArithmeticStep(
+                binaryOperatorBlock.getBlockText(),
+                leftOperand,
+                rightOperand
+        );
+    }
+
+    private static Object valueBlockToArithmeticOperand(
+            Block block,
+            String sideName
+    ) {
+        if (block == null) {
+            throw new IllegalArgumentException(sideName + " operand is missing.");
+        }
+
+        if (block instanceof ValueBlock valueBlock) {
+            return parseNumber(valueBlock.getValue());
+        }
+
+        if (block instanceof VariableBlock variableBlock) {
+            return variableBlock.getValue();
+        }
+
+        /*
+         * 先不支援巢狀 arithmetic。
+         * Nested arithmetic is not supported yet.
+         */
+        if (block instanceof BinaryOperatorBlock) {
+            throw new UnsupportedOperationException(
+                    "Nested arithmetic is not supported yet."
+            );
+        }
+
+        throw new IllegalArgumentException(
+                "Undefined " + sideName + " operand type: " + block.getClass().getSimpleName()
+        );
+    }
+
+    private static ArithmeticStep createArithmeticStep(
+            String operator,
+            Object left,
+            Object right
+    ) {
+        return switch (operator) {
+
+            case "+" ->
+                    createAddStep(left, right);
+
+            case "-" ->
+                    createSubtractStep(left, right);
+
+            case "*", "×" ->
+                    createMultiplyStep(left, right);
+
+            case "/", "÷" ->
+                    createDivideStep(left, right);
+
+            default ->
+                    throw new IllegalArgumentException("Undefined operator: " + operator);
+        };
+    }
+
+    private static ArithmeticStep createAddStep(Object left, Object right) {
+
+        if (left instanceof String leftKey && right instanceof String rightKey) {
+            return new AddStep(leftKey, rightKey);
+        }
+
+        if (left instanceof String leftKey && right instanceof Number rightNumber) {
+            return new AddStep(leftKey, rightNumber);
+        }
+
+        if (left instanceof Number leftNumber && right instanceof String rightKey) {
+            return new AddStep(leftNumber, rightKey);
+        }
+
+        return new AddStep((Number) left, (Number) right);
+    }
+
+    private static ArithmeticStep createSubtractStep(Object left, Object right) {
+
+        if (left instanceof String leftKey && right instanceof String rightKey) {
+            return new SubtractStep(leftKey, rightKey);
+        }
+
+        if (left instanceof String leftKey && right instanceof Number rightNumber) {
+            return new SubtractStep(leftKey, rightNumber);
+        }
+
+        if (left instanceof Number leftNumber && right instanceof String rightKey) {
+            return new SubtractStep(leftNumber, rightKey);
+        }
+
+        return new SubtractStep((Number) left, (Number) right);
+    }
+
+    private static ArithmeticStep createMultiplyStep(Object left, Object right) {
+
+        if (left instanceof String leftKey && right instanceof String rightKey) {
+            return new MultiplyStep(leftKey, rightKey);
+        }
+
+        if (left instanceof String leftKey && right instanceof Number rightNumber) {
+            return new MultiplyStep(leftKey, rightNumber);
+        }
+
+        if (left instanceof Number leftNumber && right instanceof String rightKey) {
+            return new MultiplyStep(leftNumber, rightKey);
+        }
+
+        return new MultiplyStep((Number) left, (Number) right);
+    }
+
+    private static ArithmeticStep createDivideStep(Object left, Object right) {
+
+        if (left instanceof String leftKey && right instanceof String rightKey) {
+            return new DivideStep(leftKey, rightKey);
+        }
+
+        if (left instanceof String leftKey && right instanceof Number rightNumber) {
+            return new DivideStep(leftKey, rightNumber);
+        }
+
+        if (left instanceof Number leftNumber && right instanceof String rightKey) {
+            return new DivideStep(leftNumber, rightKey);
+        }
+
+        return new DivideStep((Number) left, (Number) right);
+    }
+
+    public static Condition blockToCondition(Block block) {
+
+        if (block instanceof ComparisonBlock comparisonBlock) {
+            return comparisonBlockToCondition(comparisonBlock);
+        }
+
+        if (block.getBlockType() == BlockType.AND) {
+
+            List<Block> targets = getOutputTargets(block);
+
+            if (targets.size() < 2) {
+                throw new IllegalArgumentException("AND block needs two condition inputs.");
+            }
+
+            return new AndCondition(
+                    blockToCondition(targets.get(0)),
+                    blockToCondition(targets.get(1))
+            );
+        }
+
+        if (block.getBlockType() == BlockType.OR) {
+
+            List<Block> targets = getOutputTargets(block);
+
+            if (targets.size() < 2) {
+                throw new IllegalArgumentException("OR block needs two condition inputs.");
+            }
+
+            return new OrCondition(
+                    blockToCondition(targets.get(0)),
+                    blockToCondition(targets.get(1))
+            );
+        }
+
+        if (block.getBlockType() == BlockType.NOT) {
+
+            List<Block> targets = getOutputTargets(block);
+
+            if (targets.isEmpty()) {
+                throw new IllegalArgumentException("NOT block needs one condition input.");
+            }
+
+            return new NotCondition(
+                    blockToCondition(targets.get(0))
+            );
+        }
+
+        throw new IllegalArgumentException(
+                "Block type is not a condition: " + block.getClass().getSimpleName()
+        );
+    }
+
+    private static Condition comparisonBlockToCondition(ComparisonBlock comparisonBlock) {
+
+        Object leftOperand =
+                valueBlockToArithmeticOperand(
+                        comparisonBlock.getLeftOperand(),
+                        "left"
+                );
+
+        Object rightOperand =
+                valueBlockToArithmeticOperand(
+                        comparisonBlock.getRightOperand(),
+                        "right"
+                );
+
+        return switch (comparisonBlock.getBlockType()) {
+
+            case GREATER ->
+                    createGreaterThanCondition(leftOperand, rightOperand);
+
+            case LESS ->
+                    createLessThanCondition(leftOperand, rightOperand);
+
+            case EQUAL ->
+                    createEqualToCondition(leftOperand, rightOperand);
+
+            default ->
+                    throw new IllegalArgumentException(
+                            "Undefined comparison type: " + comparisonBlock.getBlockType()
+                    );
+        };
+    }
+
+    private static Condition createGreaterThanCondition(Object left, Object right) {
+
+        if (left instanceof String leftKey && right instanceof String rightKey) {
+            return new GreaterThanCondition(leftKey, rightKey);
+        }
+
+        if (left instanceof String leftKey && right instanceof Number rightNumber) {
+            return new GreaterThanCondition(leftKey, rightNumber);
+        }
+
+        if (left instanceof Number leftNumber && right instanceof String rightKey) {
+            return new GreaterThanCondition(leftNumber, rightKey);
+        }
+
+        return new GreaterThanCondition((Number) left, (Number) right);
+    }
+
+    private static Condition createLessThanCondition(Object left, Object right) {
+
+        if (left instanceof String leftKey && right instanceof String rightKey) {
+            return new LessThanCondition(leftKey, rightKey);
+        }
+
+        if (left instanceof String leftKey && right instanceof Number rightNumber) {
+            return new LessThanCondition(leftKey, rightNumber);
+        }
+
+        if (left instanceof Number leftNumber && right instanceof String rightKey) {
+            return new LessThanCondition(leftNumber, rightKey);
+        }
+
+        return new LessThanCondition((Number) left, (Number) right);
+    }
+
+    private static Condition createEqualToCondition(Object left, Object right) {
+
+        if (left instanceof String leftKey && right instanceof String rightKey) {
+            return new EqualToCondition(leftKey, rightKey);
+        }
+
+        if (left instanceof String leftKey && right instanceof Number rightNumber) {
+            return new EqualToCondition(leftKey, rightNumber);
+        }
+
+        if (left instanceof Number leftNumber && right instanceof String rightKey) {
+            return new EqualToCondition(leftNumber, rightKey);
+        }
+
+        return new EqualToCondition((Number) left, (Number) right);
+    }
+
+    private static List<Block> getOutputTargets(Block sourceBlock) {
+
+        List<Block> targets = new ArrayList<>();
+
+        for (Connection connection : sourceBlock.getOutputs()) {
+            targets.add(connection.getTo());
+        }
+
+        return targets;
+    }
+
+    private static boolean isLogicBlock(Block block) {
+
+        return block.getBlockType() == BlockType.AND
+                || block.getBlockType() == BlockType.OR
+                || block.getBlockType() == BlockType.NOT;
+    }
+
+    private static Number parseNumber(String text) {
+
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("Number value cannot be empty.");
+        }
+
+        return Double.valueOf(text.trim());
     }
 }
