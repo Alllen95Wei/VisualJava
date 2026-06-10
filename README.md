@@ -8,20 +8,20 @@
 # 簡介
 此為由蔡宇修、魏絃恩、陳鴻治為了計算機實習的期末專案，而開發的視覺化程式學習軟體。
 使用者**無需自己編寫任何程式碼**，僅需拖曳、排序積木，即可輕鬆設計自己的程式邏輯。
-![](http://allen95wei-pi:3800/uploads/2b69dab4-3dc0-4fe7-add4-fabd0a31704d.png)
+![](/imgs/intro.png)
 
 # 使用說明
 ## 介面
 - **左側：積木選擇區**，使用者可從此處拖曳新積木至*工作區*。
-![](http://allen95wei-pi:3800/uploads/228bcbe3-d130-484f-863c-2408ad6eda3e.png)
+![](/imgs/block_selections.png)
 - **中心：工作區**，使用者於此處排列、連線積木，組合自己的程式邏輯。
-![](http://allen95wei-pi:3800/uploads/c4dd2e58-3780-497c-9799-0e627e90b4fb.png)
+![](/imgs/center_workspace.png)
 - **右側：執行結果區**，未執行時顯示*工作區*狀態，執行時顯示執行結果或錯誤訊息。
-![](http://allen95wei-pi:3800/uploads/7d5192a8-cb5d-4aa0-84fe-268922b36759.png)
+![](/imgs/right_results.png)
 
 ## 操作
 - 對*積木選擇區*的積木按住滑鼠左鍵後拖曳，即可產生新積木。
-  ![](http://allen95wei-pi:3800/uploads/b622992e-9ae3-4285-a28c-ef33b96d7ff7.gif)
+  ![](/imgs/drag.gif)
 - 積木間需要建立「連線」建立先後關聯/參數連接。
   對節點按住左鍵，即可拉出連線；將連線的尾端拉至接受端點後放開，即可建立連線。
 > [!NOTE]
@@ -29,9 +29,9 @@
 > - :black_circle: 黑色：接下來要執行的積木。
 > - :large_blue_circle: 藍色：參數積木。
 > - :white_circle: 白色：接受連線的端點，無法拉線。
-  ![](http://allen95wei-pi:3800/uploads/e37ae10c-360a-40d2-939b-ec66487898ad.gif)
+  ![](/imgs/connect.gif)
 - 如要移除積木，使用左鍵快速連擊該積木 2 下即可移除。
-  ![](http://allen95wei-pi:3800/uploads/fd946e81-cb3d-4fbc-8198-9dcd7e3b07f4.gif)
+  ![](/imgs/remove.gif)
 
 
 
