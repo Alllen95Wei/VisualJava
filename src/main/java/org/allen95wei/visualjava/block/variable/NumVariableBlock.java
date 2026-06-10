@@ -8,45 +8,58 @@ public class NumVariableBlock extends VariableBlock {
 
     public NumVariableBlock(String text, Color color) {
 
-        super(text, Color.ORANGE);
+        /*
+         * 數值變數是「用來存數字的變數名稱」。
+         * Number variable is a variable name used to store a number.
+         *
+         * 所以使用者應該輸入變數名稱，例如 score、age、total。
+         * User should type a variable name, for example score, age, total.
+         */
+        super(
+                text,
+                color == null ? Color.ORANGE : color
+        );
 
         /*
-         * 數值變數目前設定為「只能輸入數字」。
-         * Number variable currently allows numbers only.
+         * 不直接把「數值變數」放進輸入框。
+         * Do not put "數值變數" directly inside the text field.
          *
-         * 原本一開始會顯示「數值變數」，
-         * 但是「數值變數」不是數字，所以會造成刪除困難。
-         *
-         * The original text was "數值變數".
-         * But that is not a number, so deleting it caused problems.
+         * 這樣使用者可以直接輸入變數名稱，不會被預設文字卡住。
+         * This lets users type a variable name directly without being stuck
+         * with the default text.
          */
         textField.clear();
         textField.setPromptText("數值變數");
 
         /*
-         * TextFormatter 會在文字真正改變前先檢查。
-         * TextFormatter checks the input before the text actually changes.
+         * 規則 / Rule:
          *
-         * 允許：
+         * 目前只允許英文字母。
+         * Only English letters are allowed for now.
+         *
+         * 正確 / Correct:
+         * score
+         * age
+         * total
+         *
+         * 錯誤 / Wrong:
          * 123
-         * -123
-         * 3.14
-         * -3.14
-         * 空字串
+         * score123
+         * score_1
          */
-        TextFormatter<String> numberFormatter =
+        TextFormatter<String> variableNameFormatter =
                 new TextFormatter<>(change -> {
 
                     String newText = change.getControlNewText();
 
-                    if (newText.matches("-?\\d*(\\.\\d*)?")) {
+                    if (newText.matches("[a-zA-Z]*")) {
                         return change;
                     }
 
                     return null;
                 });
 
-        textField.setTextFormatter(numberFormatter);
+        textField.setTextFormatter(variableNameFormatter);
     }
 
     @Override

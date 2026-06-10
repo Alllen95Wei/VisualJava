@@ -1,9 +1,8 @@
 package org.allen95wei.visualjava.block;
 
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.TextField;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -18,48 +17,51 @@ public class VariableBlock extends Block {
 
         super(text, color);
 
+        // 建立變數積木外框 / Create variable block shape
         Rectangle rect = new Rectangle(100, 35);
 
+        // 圓角矩形 / Rounded rectangle
         rect.setArcWidth(80);
         rect.setArcHeight(30);
 
         bg = rect;
-
         bg.setFill(color);
         bg.setStroke(Color.BLACK);
 
-        // 鎖定積木大小 / Lock block size
+        // 鎖定積木大小，避免被 VBox 拉寬
+        // Lock block size so VBox will not stretch it
         lockBlockSize(100, 35);
 
-        // ===== 右側白色輸入節點 / Right white input node =====
+        // 右側白色輸入節點 / Right white input node
         inputCircle = new Circle(6);
         inputCircle.setFill(Color.WHITE);
         inputCircle.setStroke(Color.BLACK);
 
+        // 註冊輸入節點，讓 EditorController 可以偵測
+        // Register input node so EditorController can detect it
         registerInputCircle(inputCircle);
 
-        // ===== 中間可輸入文字 / Editable text field =====
+        // 中間文字輸入框 / Center editable text field
         textField = new TextField(text);
         textField.setPrefWidth(70);
+        textField.setAlignment(Pos.CENTER);
 
         textField.setStyle("""
                 -fx-background-color: transparent;
                 -fx-text-fill: black;
+                -fx-font-family: 'Segoe UI';
                 -fx-font-size: 14;
+                -fx-font-weight: bold;
                 """);
-
-        // 文字置中 / Center text
-        textField.setAlignment(Pos.CENTER);
 
         /*
          * 不要把 TextField 的 mouse event 轉發給 Block。
          * Do not forward TextField mouse events to Block.
          *
-         * 原本的 this.fireEvent(e) 會讓文字編輯、選取、拖曳、刪除互相干擾。
-         * The old this.fireEvent(e) caused text editing, selection, dragging,
-         * and deletion to interfere with each other.
+         * 這樣使用者可以正常點選、選取、刪除文字。
+         * This allows users to click, select, and delete text normally.
          */
-        textField.setOnMouseClicked(event -> event.consume());
+        textField.setOnMouseClicked(MouseEvent::consume);
 
         getChildren().addAll(
                 bg,
@@ -75,7 +77,7 @@ public class VariableBlock extends Block {
         inputCircle.setTranslateX(6);
     }
 
-    // 取得使用者輸入的文字 / Get user input text
+    // 取得變數名稱 / Get variable name
     public String getValue() {
         return textField.getText();
     }
@@ -83,21 +85,5 @@ public class VariableBlock extends Block {
     @Override
     public Circle getInputCircle() {
         return inputCircle;
-    }
-
-    // 刪除自己 / Delete this block
-    private void deleteSelf() {
-
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setHeaderText("刪除變數");
-        alert.setContentText("確定要刪除這個變數嗎？");
-
-        alert.showAndWait().ifPresent(result -> {
-
-            if (result == ButtonType.OK) {
-                requestDelete();
-            }
-
-        });
     }
 }
