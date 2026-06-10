@@ -1,6 +1,7 @@
 package org.allen95wei.visualjava.coderunner;
 
 import javafx.scene.Node;
+import javafx.scene.shape.Circle;
 
 import org.allen95wei.visualjava.BlockType;
 import org.allen95wei.visualjava.Connection;
@@ -38,38 +39,56 @@ import org.allen95wei.visualjava.coderunner.core.condition.relations.EqualToCond
 import org.allen95wei.visualjava.coderunner.core.condition.relations.GreaterThanCondition;
 import org.allen95wei.visualjava.coderunner.core.condition.relations.LessThanCondition;
 
+import org.allen95wei.visualjava.coderunner.core.control.IfStep;
 import org.allen95wei.visualjava.coderunner.core.control.SetStep;
 import org.allen95wei.visualjava.coderunner.core.output.PrintStep;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BlockInterpreter {
 
     /*
      * BlockInterpreter 的用途 / Purpose of BlockInterpreter:
      *
-     * 把使用者在 UI 上拉出來的 visual blocks 轉成 backend 的 Flow / Step。
-     * Convert visual blocks created in the UI into backend Flow / Step objects.
+     * 這個 class 負責把前端畫面上的 visual blocks 轉成後端可以執行的 Flow / Step。
+     * This class converts visual blocks on the frontend into backend Flow / Step objects.
      *
-     * 目前先支援 / Currently supported:
-     * START, SET, PRINT, VALUE, VARIABLE,
+     * 目前支援 / Currently supported:
+     * START, SET, PRINT,
+     * VALUE,
+     * NUM_VARIABLE, STRING_VARIABLE,
      * +, -, ×, ÷,
      * GREATER, LESS, EQUAL,
-     * AND, OR, NOT as printable/evaluable conditions.
+     * AND, OR, NOT,
+     * IF, ENDIF.
      *
-     * 目前先不處理 / Not handled yet:
-     * IF and ENDIF branch execution.
+     * IF 的基本概念 / Basic IF concept:
      *
-     * 注意 / Note:
-     * START 只是流程入口，不應該被轉成 Step。
-     * START is only the entry point. It should not be converted into a Step.
+     * IfBlock 的左側紅色節點連到 condition block。
+     * The left red node of IfBlock connects to a condition block.
+     *
+     * IfBlock 的下方黑色節點代表 true branch。
+     * The bottom black node of IfBlock means true branch.
+     *
+     * IfBlock 的右側黑色節點代表 false branch。
+     * The right black node of IfBlock means false branch.
+     *
+     * true / false branch 最後可以接到 EndIfBlock。
+     * true / false branches can finally connect to EndIfBlock.
      */
 
     public static Flow run(List<Node> nodes) {
 
+        // 建立後端流程 / Create a backend flow
         Flow mainFlow = new Flow();
 
+        // 找到 StartBlock / Find StartBlock
         StartBlock startBlock = findStartBlock(nodes);
 
         if (startBlock == null) {
@@ -77,34 +96,62 @@ public class BlockInterpreter {
         }
 
         /*
-         * 從 StartBlock 的下一個 block 開始。
-         * Start from the block after StartBlock.
+         * StartBlock 只是入口，不轉成 Step。
+         * StartBlock is only the entry point. It is not converted into a Step.
          */
-        Block currentBlock = startBlock.getNextBlock();
+        Block currentBlock = getNextFlowBlock(startBlock);
+
+        /*
+         * 防止主流程無限迴圈。
+         * Prevent infinite loops in the main flow.
+         */
+        Set<Block> visitedBlocks = new HashSet<>();
 
         while (currentBlock != null) {
 
-            if (currentBlock instanceof IfBlock) {
-                throw new UnsupportedOperationException(
-                        "IF is not supported by BlockInterpreter yet."
+            if (visitedBlocks.contains(currentBlock)) {
+                throw new IllegalStateException(
+                        "Cycle detected in flow connection near: "
+                                + currentBlock.getBlockText()
                 );
             }
+
+            visitedBlocks.add(currentBlock);
 
             if (currentBlock instanceof EndIfBlock endIfBlock) {
 
                 /*
-                 * ENDIF 目前先當作 pass-through。
-                 * For now, ENDIF is treated as pass-through.
+                 * 如果主流程直接遇到 ENDIF，就把它當成通過點。
+                 * If the main flow directly meets ENDIF, treat it as pass-through.
                  */
-                currentBlock = endIfBlock.getNextBlock();
+                currentBlock = getNextFlowBlock(endIfBlock);
                 continue;
             }
 
+            if (currentBlock instanceof IfBlock ifBlock) {
+
+                /*
+                 * IF 需要特別處理，因為它會產生 true / false 兩個 Flow。
+                 * IF needs special handling because it creates true / false flows.
+                 */
+                IfBuildResult ifBuildResult = buildIfStep(ifBlock);
+
+                mainFlow.addStep(ifBuildResult.ifStep);
+
+                /*
+                 * IF 執行完後，主流程跳到 ENDIF 後面的 block。
+                 * After IF finishes, the main flow jumps to the block after ENDIF.
+                 */
+                currentBlock = ifBuildResult.nextAfterIf;
+                continue;
+            }
+
+            // 一般 block 轉成 Step / Convert normal block into Step
             Step step = blockToStep(currentBlock);
             mainFlow.addStep(step);
 
             if (currentBlock instanceof ProcessBlock processBlock) {
-                currentBlock = processBlock.getNextBlock();
+                currentBlock = getNextFlowBlock(processBlock);
             } else {
                 currentBlock = null;
             }
@@ -113,18 +160,251 @@ public class BlockInterpreter {
         return mainFlow;
     }
 
+    public static String runAndGetOutput(List<Node> nodes) {
+
+        /*
+         * 這個方法給 EditorController 的 Run button 使用。
+         * This method is used by the Run button in EditorController.
+         *
+         * 後端 PrintStep 目前用 System.out.println() 輸出。
+         * Backend PrintStep currently prints with System.out.println().
+         *
+         * UI 需要 String，所以這裡暫時捕捉 System.out。
+         * The UI needs a String, so we temporarily capture System.out here.
+         */
+        PrintStream originalOutput = System.out;
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        PrintStream capturedOutput =
+                new PrintStream(
+                        outputStream,
+                        true,
+                        StandardCharsets.UTF_8
+                );
+
+        try {
+            System.setOut(capturedOutput);
+
+            Flow mainFlow = run(nodes);
+            ExecutionContext context = new ExecutionContext();
+
+            mainFlow.execute(context);
+
+        } catch (Exception exception) {
+
+            // 把錯誤訊息顯示在右側結果區 / Show error message in the result area
+            return "Error: " + exception.getMessage();
+
+        } finally {
+
+            // 一定要還原 System.out / Always restore System.out
+            capturedOutput.flush();
+            System.setOut(originalOutput);
+        }
+
+        String result = outputStream.toString(StandardCharsets.UTF_8);
+
+        if (result.isBlank()) {
+            return "Program finished. No output.";
+        }
+
+        return result.stripTrailing();
+    }
+
     private static StartBlock findStartBlock(List<Node> nodes) {
 
+        StartBlock fallbackStartBlock = null;
+
         for (Node node : nodes) {
-            if (node instanceof StartBlock startBlock) {
+
+            if (!(node instanceof StartBlock startBlock)) {
+                continue;
+            }
+
+            if (fallbackStartBlock == null) {
+                fallbackStartBlock = startBlock;
+            }
+
+            // 優先選擇有下一個 flow block 的 StartBlock / Prefer connected StartBlock
+            if (getNextFlowBlock(startBlock) != null) {
                 return startBlock;
             }
         }
 
-        return null;
+        return fallbackStartBlock;
+    }
+
+    private static IfBuildResult buildIfStep(IfBlock ifBlock) {
+
+        /*
+         * 取得 IF 的條件。
+         * Get IF condition.
+         */
+        Block conditionBlock = getIfConditionBlock(ifBlock);
+
+        if (conditionBlock == null) {
+            throw new IllegalArgumentException("IfBlock has no condition input.");
+        }
+
+        Condition condition = blockToCondition(conditionBlock);
+
+        /*
+         * 取得 true / false branch 的起點。
+         * Get the start block of true / false branch.
+         */
+        Block trueBranchStart = getIfTrueBranchStart(ifBlock);
+        Block falseBranchStart = getIfFalseBranchStart(ifBlock);
+
+        /*
+         * 把 true branch 轉成 Flow。
+         * Convert true branch into Flow.
+         */
+        BranchBuildResult trueBranchResult =
+                buildBranchFlowUntilEndIf(trueBranchStart);
+
+        /*
+         * 把 false branch 轉成 Flow。
+         * Convert false branch into Flow.
+         */
+        BranchBuildResult falseBranchResult =
+                buildBranchFlowUntilEndIf(falseBranchStart);
+
+        /*
+         * 確認 true / false branch 是否接到同一個 ENDIF。
+         * Check whether true / false branches connect to the same ENDIF.
+         */
+        EndIfBlock joinEndIfBlock = chooseJoinEndIfBlock(
+                trueBranchResult.endIfBlock,
+                falseBranchResult.endIfBlock
+        );
+
+        Step falseStep = null;
+
+        if (falseBranchResult.hasStep || falseBranchResult.endIfBlock != null) {
+            falseStep = falseBranchResult.flow;
+        }
+
+        IfStep ifStep = new IfStep(
+                condition,
+                trueBranchResult.flow,
+                falseStep
+        );
+
+        Block nextAfterIf = null;
+
+        if (joinEndIfBlock != null) {
+            nextAfterIf = getNextFlowBlock(joinEndIfBlock);
+        }
+
+        return new IfBuildResult(
+                ifStep,
+                joinEndIfBlock,
+                nextAfterIf
+        );
+    }
+
+    private static BranchBuildResult buildBranchFlowUntilEndIf(Block branchStart) {
+
+        /*
+         * branchFlow 用來存 true / false branch 裡面的 Step。
+         * branchFlow stores Steps inside true / false branch.
+         */
+        Flow branchFlow = new Flow();
+
+        Block currentBlock = branchStart;
+
+        Set<Block> visitedBlocks = new HashSet<>();
+
+        boolean hasStep = false;
+
+        while (currentBlock != null) {
+
+            if (currentBlock instanceof EndIfBlock endIfBlock) {
+
+                /*
+                 * 遇到 ENDIF 代表 branch 結束。
+                 * Meeting ENDIF means the branch ends.
+                 *
+                 * ENDIF 本身不轉成 Step。
+                 * ENDIF itself is not converted into a Step.
+                 */
+                return new BranchBuildResult(
+                        branchFlow,
+                        endIfBlock,
+                        hasStep
+                );
+            }
+
+            if (visitedBlocks.contains(currentBlock)) {
+                throw new IllegalStateException(
+                        "Cycle detected inside IF branch near: "
+                                + currentBlock.getBlockText()
+                );
+            }
+
+            visitedBlocks.add(currentBlock);
+
+            if (currentBlock instanceof IfBlock nestedIfBlock) {
+
+                /*
+                 * 支援簡單 nested IF。
+                 * Support simple nested IF.
+                 */
+                IfBuildResult nestedIfResult = buildIfStep(nestedIfBlock);
+
+                branchFlow.addStep(nestedIfResult.ifStep);
+                hasStep = true;
+
+                currentBlock = nestedIfResult.nextAfterIf;
+                continue;
+            }
+
+            Step step = blockToStep(currentBlock);
+            branchFlow.addStep(step);
+            hasStep = true;
+
+            if (currentBlock instanceof ProcessBlock processBlock) {
+                currentBlock = getNextFlowBlock(processBlock);
+            } else {
+                currentBlock = null;
+            }
+        }
+
+        return new BranchBuildResult(
+                branchFlow,
+                null,
+                hasStep
+        );
+    }
+
+    private static EndIfBlock chooseJoinEndIfBlock(
+            EndIfBlock trueEndIfBlock,
+            EndIfBlock falseEndIfBlock
+    ) {
+        if (trueEndIfBlock != null && falseEndIfBlock != null) {
+
+            if (trueEndIfBlock != falseEndIfBlock) {
+                throw new IllegalArgumentException(
+                        "True branch and false branch must connect to the same EndIfBlock."
+                );
+            }
+
+            return trueEndIfBlock;
+        }
+
+        if (trueEndIfBlock != null) {
+            return trueEndIfBlock;
+        }
+
+        return falseEndIfBlock;
     }
 
     public static Step blockToStep(Block block) {
+
+        if (block instanceof IfBlock ifBlock) {
+            return buildIfStep(ifBlock).ifStep;
+        }
 
         if (block instanceof PrintBlock printBlock) {
             return printBlockToStep(printBlock);
@@ -135,14 +415,31 @@ public class BlockInterpreter {
         }
 
         if (block instanceof BinaryOperatorBlock binaryOperatorBlock) {
-            return arithmeticBlockToStep(binaryOperatorBlock);
+
+            /*
+             * 如果 arithmetic block 被放在主流程裡，暫時印出計算結果。
+             * If arithmetic block is placed in the main flow, print its result for now.
+             */
+            ArithmeticStep arithmeticStep = arithmeticBlockToStep(binaryOperatorBlock);
+
+            return new Step() {
+                @Override
+                public void execute() {
+                    execute(new ExecutionContext());
+                }
+
+                @Override
+                public void execute(ExecutionContext context) {
+                    System.out.println(arithmeticStep.calculate(context));
+                }
+            };
         }
 
         if (block instanceof ComparisonBlock || isLogicBlock(block)) {
 
             /*
-             * Condition block 如果被當成流程 Step，暫時輸出 true/false。
-             * If a condition block is used as a flow Step, print its boolean result for now.
+             * 如果 condition block 被放在主流程裡，暫時印出 true / false。
+             * If condition block is placed in the main flow, print true / false for now.
              */
             Condition condition = blockToCondition(block);
 
@@ -166,39 +463,23 @@ public class BlockInterpreter {
 
     private static Step printBlockToStep(PrintBlock printBlock) {
 
-        Block printTarget = printBlock.getPrintTarget();
+        // 取得 PrintBlock 要列印的目標 / Get target that PrintBlock wants to print
+        Block printTarget = getPrintTarget(printBlock);
 
         if (printTarget == null) {
             throw new IllegalArgumentException("PrintBlock has no print target.");
         }
 
         if (printTarget instanceof ValueBlock valueBlock) {
-
-            /*
-             * 直接列印 literal value。
-             * Print literal value directly.
-             */
             return new PrintStep(valueBlock.getValue());
         }
 
         if (printTarget instanceof VariableBlock variableBlock) {
-
-            /*
-             * 列印變數。
-             * Print variable by context key.
-             *
-             * "%s" 是格式，variableBlock.getValue() 是變數名稱。
-             * "%s" is the format, variableBlock.getValue() is the variable name.
-             */
             return new PrintStep("%s", variableBlock.getValue());
         }
 
         if (printTarget instanceof BinaryOperatorBlock binaryOperatorBlock) {
 
-            /*
-             * 列印 arithmetic expression 的計算結果。
-             * Print calculated result of an arithmetic expression.
-             */
             ArithmeticStep arithmeticStep = arithmeticBlockToStep(binaryOperatorBlock);
 
             return new Step() {
@@ -216,10 +497,6 @@ public class BlockInterpreter {
 
         if (printTarget instanceof ComparisonBlock || isLogicBlock(printTarget)) {
 
-            /*
-             * 列印 condition 的 true / false。
-             * Print true / false result of a condition.
-             */
             Condition condition = blockToCondition(printTarget);
 
             return new Step() {
@@ -236,14 +513,15 @@ public class BlockInterpreter {
         }
 
         throw new IllegalArgumentException(
-                "Block type is not printable: " + printTarget.getClass().getSimpleName()
+                "Block type is not printable: "
+                        + printTarget.getClass().getSimpleName()
         );
     }
 
     private static Step setBlockToStep(SetBlock setBlock) {
 
-        Block variableSource = setBlock.getVariableSource();
-        Block valueSource = setBlock.getValueSource();
+        Block variableSource = getSetVariableSource(setBlock);
+        Block valueSource = getSetValueSource(setBlock);
 
         if (!(variableSource instanceof VariableBlock variableBlock)) {
             throw new IllegalArgumentException("SetBlock variable source must be a VariableBlock.");
@@ -267,10 +545,7 @@ public class BlockInterpreter {
             return createStringSetStep(variableName, valueSource);
         }
 
-        /*
-         * 舊版 VariableBlock 預設當成字串變數。
-         * Old VariableBlock is treated as a string variable by default.
-         */
+        // 舊版 VariableBlock 預設當成字串變數 / Old VariableBlock is treated as string variable
         return createStringSetStep(variableName, valueSource);
     }
 
@@ -301,7 +576,8 @@ public class BlockInterpreter {
         }
 
         throw new IllegalArgumentException(
-                "Undefined number value source type: " + valueSource.getClass().getSimpleName()
+                "Undefined number value source type: "
+                        + valueSource.getClass().getSimpleName()
         );
     }
 
@@ -325,21 +601,23 @@ public class BlockInterpreter {
         }
 
         throw new IllegalArgumentException(
-                "Undefined string value source type: " + valueSource.getClass().getSimpleName()
+                "Undefined string value source type: "
+                        + valueSource.getClass().getSimpleName()
         );
     }
 
-    public static ArithmeticStep arithmeticBlockToStep(BinaryOperatorBlock binaryOperatorBlock) {
-
+    public static ArithmeticStep arithmeticBlockToStep(
+            BinaryOperatorBlock binaryOperatorBlock
+    ) {
         Object leftOperand =
                 valueBlockToArithmeticOperand(
-                        binaryOperatorBlock.getLeftOperand(),
+                        getBinaryLeftOperand(binaryOperatorBlock),
                         "left"
                 );
 
         Object rightOperand =
                 valueBlockToArithmeticOperand(
-                        binaryOperatorBlock.getRightOperand(),
+                        getBinaryRightOperand(binaryOperatorBlock),
                         "right"
                 );
 
@@ -366,10 +644,6 @@ public class BlockInterpreter {
             return variableBlock.getValue();
         }
 
-        /*
-         * 先不支援巢狀 arithmetic。
-         * Nested arithmetic is not supported yet.
-         */
         if (block instanceof BinaryOperatorBlock) {
             throw new UnsupportedOperationException(
                     "Nested arithmetic is not supported yet."
@@ -377,7 +651,8 @@ public class BlockInterpreter {
         }
 
         throw new IllegalArgumentException(
-                "Undefined " + sideName + " operand type: " + block.getClass().getSimpleName()
+                "Undefined " + sideName + " operand type: "
+                        + block.getClass().getSimpleName()
         );
     }
 
@@ -481,61 +756,63 @@ public class BlockInterpreter {
 
         if (block.getBlockType() == BlockType.AND) {
 
-            List<Block> targets = getOutputTargets(block);
+            List<Block> conditionSources = getConditionSources(block);
 
-            if (targets.size() < 2) {
+            if (conditionSources.size() < 2) {
                 throw new IllegalArgumentException("AND block needs two condition inputs.");
             }
 
             return new AndCondition(
-                    blockToCondition(targets.get(0)),
-                    blockToCondition(targets.get(1))
+                    blockToCondition(conditionSources.get(0)),
+                    blockToCondition(conditionSources.get(1))
             );
         }
 
         if (block.getBlockType() == BlockType.OR) {
 
-            List<Block> targets = getOutputTargets(block);
+            List<Block> conditionSources = getConditionSources(block);
 
-            if (targets.size() < 2) {
+            if (conditionSources.size() < 2) {
                 throw new IllegalArgumentException("OR block needs two condition inputs.");
             }
 
             return new OrCondition(
-                    blockToCondition(targets.get(0)),
-                    blockToCondition(targets.get(1))
+                    blockToCondition(conditionSources.get(0)),
+                    blockToCondition(conditionSources.get(1))
             );
         }
 
         if (block.getBlockType() == BlockType.NOT) {
 
-            List<Block> targets = getOutputTargets(block);
+            List<Block> conditionSources = getConditionSources(block);
 
-            if (targets.isEmpty()) {
+            if (conditionSources.isEmpty()) {
                 throw new IllegalArgumentException("NOT block needs one condition input.");
             }
 
             return new NotCondition(
-                    blockToCondition(targets.get(0))
+                    blockToCondition(conditionSources.get(0))
             );
         }
 
         throw new IllegalArgumentException(
-                "Block type is not a condition: " + block.getClass().getSimpleName()
+                "Block type is not a condition: "
+                        + block.getClass().getSimpleName()
         );
     }
 
-    private static Condition comparisonBlockToCondition(ComparisonBlock comparisonBlock) {
-
+    private static Condition comparisonBlockToCondition(
+            ComparisonBlock comparisonBlock
+    ) {
         Object leftOperand =
                 valueBlockToArithmeticOperand(
-                        comparisonBlock.getLeftOperand(),
+                        getComparisonLeftOperand(comparisonBlock),
                         "left"
                 );
 
         Object rightOperand =
                 valueBlockToArithmeticOperand(
-                        comparisonBlock.getRightOperand(),
+                        getComparisonRightOperand(comparisonBlock),
                         "right"
                 );
 
@@ -552,13 +829,16 @@ public class BlockInterpreter {
 
             default ->
                     throw new IllegalArgumentException(
-                            "Undefined comparison type: " + comparisonBlock.getBlockType()
+                            "Undefined comparison type: "
+                                    + comparisonBlock.getBlockType()
                     );
         };
     }
 
-    private static Condition createGreaterThanCondition(Object left, Object right) {
-
+    private static Condition createGreaterThanCondition(
+            Object left,
+            Object right
+    ) {
         if (left instanceof String leftKey && right instanceof String rightKey) {
             return new GreaterThanCondition(leftKey, rightKey);
         }
@@ -574,8 +854,10 @@ public class BlockInterpreter {
         return new GreaterThanCondition((Number) left, (Number) right);
     }
 
-    private static Condition createLessThanCondition(Object left, Object right) {
-
+    private static Condition createLessThanCondition(
+            Object left,
+            Object right
+    ) {
         if (left instanceof String leftKey && right instanceof String rightKey) {
             return new LessThanCondition(leftKey, rightKey);
         }
@@ -591,8 +873,10 @@ public class BlockInterpreter {
         return new LessThanCondition((Number) left, (Number) right);
     }
 
-    private static Condition createEqualToCondition(Object left, Object right) {
-
+    private static Condition createEqualToCondition(
+            Object left,
+            Object right
+    ) {
         if (left instanceof String leftKey && right instanceof String rightKey) {
             return new EqualToCondition(leftKey, rightKey);
         }
@@ -608,18 +892,296 @@ public class BlockInterpreter {
         return new EqualToCondition((Number) left, (Number) right);
     }
 
-    private static List<Block> getOutputTargets(Block sourceBlock) {
+    /*
+     * ============================================================
+     * Connection reading helpers
+     * 連線讀取輔助方法
+     * ============================================================
+     */
 
-        List<Block> targets = new ArrayList<>();
+    private static Block getNextFlowBlock(ProcessBlock processBlock) {
 
-        for (Connection connection : sourceBlock.getOutputs()) {
-            targets.add(connection.getTo());
+        Block nextFromConnection =
+                findTargetBySourceCircle(
+                        processBlock,
+                        processBlock.getOutputCircle()
+                );
+
+        if (nextFromConnection != null) {
+            return nextFromConnection;
         }
 
-        return targets;
+        return processBlock.getNextBlock();
+    }
+
+    private static Block getIfConditionBlock(IfBlock ifBlock) {
+
+        /*
+         * IF 左側紅色節點連到 condition block。
+         * The left red node of IF connects to the condition block.
+         */
+        Block conditionFromConnection =
+                findTargetBySourceCircle(
+                        ifBlock,
+                        ifBlock.getLeftOutputCircle()
+                );
+
+        if (conditionFromConnection != null) {
+            return conditionFromConnection;
+        }
+
+        return ifBlock.getNextBlockInput();
+    }
+
+    private static Block getIfTrueBranchStart(IfBlock ifBlock) {
+
+        /*
+         * IF 下方黑色節點代表 true branch。
+         * The bottom black node of IF means true branch.
+         */
+        Block trueBranchFromConnection =
+                findTargetBySourceCircle(
+                        ifBlock,
+                        ifBlock.getOutputCircle()
+                );
+
+        if (trueBranchFromConnection != null) {
+            return trueBranchFromConnection;
+        }
+
+        return ifBlock.getNextBlockTrue();
+    }
+
+    private static Block getIfFalseBranchStart(IfBlock ifBlock) {
+
+        /*
+         * IF 右側黑色節點代表 false branch。
+         * The right black node of IF means false branch.
+         */
+        Block falseBranchFromConnection =
+                findTargetBySourceCircle(
+                        ifBlock,
+                        ifBlock.getRightCircle()
+                );
+
+        if (falseBranchFromConnection != null) {
+            return falseBranchFromConnection;
+        }
+
+        return ifBlock.getNextBlockFalse();
+    }
+
+    private static Block getPrintTarget(PrintBlock printBlock) {
+
+        Block targetFromLeftCircle =
+                findSourceByTargetCircle(
+                        printBlock,
+                        printBlock.getLeftPrintCircle()
+                );
+
+        if (targetFromLeftCircle != null) {
+            return targetFromLeftCircle;
+        }
+
+        Block targetFromAnyInput = findFirstIncomingDataSource(printBlock);
+
+        if (targetFromAnyInput != null) {
+            return targetFromAnyInput;
+        }
+
+        if (printBlock.getPrintTarget() != null) {
+            return printBlock.getPrintTarget();
+        }
+
+        return findTargetBySourceCircle(
+                printBlock,
+                printBlock.getLeftPrintCircle()
+        );
+    }
+
+    private static Block getSetVariableSource(SetBlock setBlock) {
+
+        Block sourceFromConnection =
+                findSourceByTargetCircle(
+                        setBlock,
+                        setBlock.getUpperVariableCircle()
+                );
+
+        if (sourceFromConnection != null) {
+            return sourceFromConnection;
+        }
+
+        return setBlock.getVariableSource();
+    }
+
+    private static Block getSetValueSource(SetBlock setBlock) {
+
+        Block sourceFromConnection =
+                findSourceByTargetCircle(
+                        setBlock,
+                        setBlock.getLowerValueCircle()
+                );
+
+        if (sourceFromConnection != null) {
+            return sourceFromConnection;
+        }
+
+        return setBlock.getValueSource();
+    }
+
+    private static Block getBinaryLeftOperand(
+            BinaryOperatorBlock binaryOperatorBlock
+    ) {
+        Block sourceFromConnection =
+                findSourceByTargetCircle(
+                        binaryOperatorBlock,
+                        binaryOperatorBlock.getLeftOperandCircle()
+                );
+
+        if (sourceFromConnection != null) {
+            return sourceFromConnection;
+        }
+
+        return binaryOperatorBlock.getLeftOperand();
+    }
+
+    private static Block getBinaryRightOperand(
+            BinaryOperatorBlock binaryOperatorBlock
+    ) {
+        Block sourceFromConnection =
+                findSourceByTargetCircle(
+                        binaryOperatorBlock,
+                        binaryOperatorBlock.getRightOperandCircle()
+                );
+
+        if (sourceFromConnection != null) {
+            return sourceFromConnection;
+        }
+
+        return binaryOperatorBlock.getRightOperand();
+    }
+
+    private static Block getComparisonLeftOperand(
+            ComparisonBlock comparisonBlock
+    ) {
+        Block sourceFromConnection =
+                findSourceByTargetCircle(
+                        comparisonBlock,
+                        comparisonBlock.getUpperVariableCircle()
+                );
+
+        if (sourceFromConnection != null) {
+            return sourceFromConnection;
+        }
+
+        return comparisonBlock.getLeftOperand();
+    }
+
+    private static Block getComparisonRightOperand(
+            ComparisonBlock comparisonBlock
+    ) {
+        Block sourceFromConnection =
+                findSourceByTargetCircle(
+                        comparisonBlock,
+                        comparisonBlock.getLowerValueCircle()
+                );
+
+        if (sourceFromConnection != null) {
+            return sourceFromConnection;
+        }
+
+        return comparisonBlock.getRightOperand();
+    }
+
+    private static Block findTargetBySourceCircle(
+            Block sourceBlock,
+            Circle sourceCircle
+    ) {
+        if (sourceBlock == null || sourceCircle == null) {
+            return null;
+        }
+
+        for (Connection connection : sourceBlock.getOutputs()) {
+
+            if (connection.getFromCircle() == sourceCircle) {
+                return connection.getTo();
+            }
+        }
+
+        return null;
+    }
+
+    private static Block findSourceByTargetCircle(
+            Block targetBlock,
+            Circle targetCircle
+    ) {
+        if (targetBlock == null || targetCircle == null) {
+            return null;
+        }
+
+        for (Connection connection : targetBlock.getInputs()) {
+
+            if (connection.getToCircle() == targetCircle) {
+                return connection.getFrom();
+            }
+        }
+
+        return null;
+    }
+
+    private static Block findFirstIncomingDataSource(Block targetBlock) {
+
+        for (Connection connection : targetBlock.getInputs()) {
+
+            Block sourceBlock = connection.getFrom();
+
+            if (isDataBlock(sourceBlock)) {
+                return sourceBlock;
+            }
+        }
+
+        return null;
+    }
+
+    private static List<Block> getConditionSources(Block logicBlock) {
+
+        List<Block> sources = new ArrayList<>();
+
+        for (Connection connection : logicBlock.getInputs()) {
+
+            Block sourceBlock = connection.getFrom();
+
+            if (sourceBlock instanceof ComparisonBlock || isLogicBlock(sourceBlock)) {
+                sources.add(sourceBlock);
+            }
+        }
+
+        for (Connection connection : logicBlock.getOutputs()) {
+
+            Block targetBlock = connection.getTo();
+
+            if (targetBlock instanceof ComparisonBlock || isLogicBlock(targetBlock)) {
+                sources.add(targetBlock);
+            }
+        }
+
+        return sources;
+    }
+
+    private static boolean isDataBlock(Block block) {
+
+        return block instanceof ValueBlock
+                || block instanceof VariableBlock
+                || block instanceof BinaryOperatorBlock
+                || block instanceof ComparisonBlock
+                || isLogicBlock(block);
     }
 
     private static boolean isLogicBlock(Block block) {
+
+        if (block == null) {
+            return false;
+        }
 
         return block.getBlockType() == BlockType.AND
                 || block.getBlockType() == BlockType.OR
@@ -632,6 +1194,44 @@ public class BlockInterpreter {
             throw new IllegalArgumentException("Number value cannot be empty.");
         }
 
-        return Double.valueOf(text.trim());
+        try {
+            return Double.valueOf(text.trim());
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException("Invalid number value: " + text);
+        }
+    }
+
+    private static class IfBuildResult {
+
+        private final Step ifStep;
+        private final EndIfBlock endIfBlock;
+        private final Block nextAfterIf;
+
+        private IfBuildResult(
+                Step ifStep,
+                EndIfBlock endIfBlock,
+                Block nextAfterIf
+        ) {
+            this.ifStep = ifStep;
+            this.endIfBlock = endIfBlock;
+            this.nextAfterIf = nextAfterIf;
+        }
+    }
+
+    private static class BranchBuildResult {
+
+        private final Flow flow;
+        private final EndIfBlock endIfBlock;
+        private final boolean hasStep;
+
+        private BranchBuildResult(
+                Flow flow,
+                EndIfBlock endIfBlock,
+                boolean hasStep
+        ) {
+            this.flow = flow;
+            this.endIfBlock = endIfBlock;
+            this.hasStep = hasStep;
+        }
     }
 }

@@ -27,6 +27,8 @@ import org.allen95wei.visualjava.block.process.PrintBlock;
 import org.allen95wei.visualjava.block.process.SetBlock;
 import org.allen95wei.visualjava.block.process.StartBlock;
 
+import org.allen95wei.visualjava.coderunner.BlockInterpreter;
+
 import java.util.ArrayList;
 
 public class EditorController {
@@ -1093,15 +1095,42 @@ public class EditorController {
     @FXML
     private void handleRunBlocks() {
 
-        // 把 blocksLayer 裡面的所有積木交給 VisualBackendBridge 執行
-        // Send all blocks inside blocksLayer to VisualBackendBridge for execution
+        /*
+         * 這裡是前端 Run button 和後端 BlockInterpreter 的連接點。
+         * This is the connection point between the frontend Run button
+         * and the backend BlockInterpreter.
+         *
+         * blocksLayer.getChildren()
+         * = 目前工作區裡所有 visual blocks。
+         * = all visual blocks currently placed in the workspace.
+         *
+         * BlockInterpreter.runAndGetOutput(...)
+         * = 把 visual blocks 轉成 backend Flow / Step，執行後回傳輸出文字。
+         * = converts visual blocks into backend Flow / Step,
+         *   executes them, and returns the output text.
+         *
+         * 目前先支援基本流程：
+         * Currently supported basic flow:
+         *
+         * START → SET → PRINT
+         *
+         * 以及：
+         * Also:
+         *
+         * VALUE, VARIABLE, +, -, ×, ÷, >, <, =, AND, OR, NOT
+         *
+         * IF / ENDIF 還沒完整接上，所以先不要測 IF。
+         * IF / ENDIF is not fully connected yet, so do not test IF for now.
+         */
         String runResult =
-                VisualBackendBridge.run(
+                BlockInterpreter.runAndGetOutput(
                         blocksLayer.getChildren()
                 );
 
-        // 把執行結果顯示在右側結果區
-        // Show execution result in the right result area
+        /*
+         * 把執行結果顯示在右側結果區。
+         * Show the execution result in the right result area.
+         */
         resultLabel.setText(runResult);
     }
 
