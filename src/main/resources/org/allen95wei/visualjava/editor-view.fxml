@@ -27,7 +27,7 @@
                  -fx-border-width: 0 0 1 0;">
 
         <!-- App title / 應用程式標題 -->
-        <Label text="Visual Java Editor"
+        <Label text="ED1TØR"
                layoutX="24.0"
                layoutY="13.0"
                style="-fx-font-family: 'Segoe UI';

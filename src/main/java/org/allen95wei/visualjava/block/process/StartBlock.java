@@ -9,14 +9,14 @@ public class StartBlock extends ProcessBlock {
 
         super(
                 text,
-                Color.DARKGREEN
+                Color.LIGHTGREEN
         );
 
         label.setStyle("""
                 -fx-font-family: 'Segoe UI';
                 -fx-font-size: 16;
                 -fx-font-weight: bold;
-                -fx-text-fill: white;
+                -fx-text-fill: black;
                 """);
         ((Rectangle) bg).setArcWidth(30);
         ((Rectangle) bg).setArcHeight(30);
