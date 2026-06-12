@@ -80,11 +80,22 @@
   ## 儲存
 一鍵儲存，保留你的創作成果。
 使用者可以隨時保存目前的工作區內容，讓每一次編輯都不會遺失。
-![](/imgs/save feature video.mp4)
+<img width="493" height="376" alt="save feature photo" src="https://github.com/user-attachments/assets/3d7f551f-4f9a-4e90-a832-491b77b2d488" />
+
+
+https://github.com/user-attachments/assets/3f3f002b-8a02-402c-a58a-4c1844eab940
+
+
+
+
 
 ## 放大 & 縮小
 自由縮放，掌握每一個細節。
 放大可以清楚查看積木與連線，縮小則能快速掌握整體流程，讓編輯更加直覺又有效率。
+
+
+https://github.com/user-attachments/assets/e1fba5e7-94a4-4ef2-8782-e2bd0e71bdbc
+
 
 
 # 架構
