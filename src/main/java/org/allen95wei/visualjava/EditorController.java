@@ -15,6 +15,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
+import javafx.stage.FileChooser;
+
 
 import org.allen95wei.visualjava.block.Block;
 import org.allen95wei.visualjava.block.BlockFactory;
@@ -28,13 +30,21 @@ import org.allen95wei.visualjava.block.process.SetBlock;
 import org.allen95wei.visualjava.block.process.StartBlock;
 
 import org.allen95wei.visualjava.coderunner.BlockInterpreter;
+import org.allen95wei.visualjava.workspace.WorkspaceFileManager;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class EditorController {
 
     @FXML
     private AnchorPane rootPane;
+
+    @FXML
+    private Pane topBar;
+
+    @FXML
+    private Pane bottomBar;
 
     @FXML
     private VBox toolbox;
@@ -55,6 +65,9 @@ public class EditorController {
     private Label resultLabel;
 
     @FXML
+    private Label zoomLabel;
+
+    @FXML
     private ScrollPane workspaceScrollPane;
 
     @FXML
@@ -62,6 +75,21 @@ public class EditorController {
 
     @FXML
     private Button toolboxToggleButton;
+
+    @FXML
+    private Button runButton;
+
+    @FXML
+    private Button saveButton;
+
+    @FXML
+    private Button zoomOutButton;
+
+    @FXML
+    private Button zoomInButton;
+
+    @FXML
+    private Button zoomResetButton;
 
     private boolean toolboxVisible = true;
 
@@ -75,6 +103,22 @@ public class EditorController {
 
     private static final double WORKSPACE_OPEN_X = 200.0;
     private static final double WORKSPACE_CLOSED_X = 24.0;
+
+    private static final double TOP_BAR_HEIGHT = 56.0;
+    private static final double BOTTOM_BAR_HEIGHT = 40.0;
+
+    private static final double MINIMUM_CONTENT_HEIGHT = 320.0;
+    private static final double MINIMUM_WORKSPACE_WIDTH = 320.0;
+
+    private static final double RESULT_WIDTH_RATIO = 0.30;
+    private static final double RESULT_WIDTH_MINIMUM = 300.0;
+    private static final double RESULT_WIDTH_MAXIMUM = 420.0;
+
+    private static final double ZOOM_MINIMUM = 0.50;
+    private static final double ZOOM_MAXIMUM = 2.00;
+    private static final double ZOOM_STEP = 0.10;
+
+    private double workspaceZoom = 1.00;
 
     private Line tempLine;
 
@@ -153,11 +197,29 @@ public class EditorController {
         // 初始化右邊結果區文字 / Initialize result area text
         resultLabel.setText("執行結果區");
 
+        /*
+         * 啟用自適應版面。
+         * Enable responsive layout.
+         *
+         * 這樣視窗高度或寬度改變時，
+         * top bar、workspace、result pane、bottom bar 會重新計算大小。
+         *
+         * This makes top bar, workspace, result pane, and bottom bar
+         * recalculate their sizes when the window size changes.
+         */
+        setupResponsiveLayout();
+
         // 初始化左側積木工具欄狀態 / Initialize the left block toolbox state
         setToolboxVisible(true);
 
         // 讓滑動按鈕保持在最上層 / Keep the sliding button on top
         toolboxToggleButton.toFront();
+
+        // 初始化工作區縮放 / Initialize workspace zoom
+        applyWorkspaceZoom();
+
+        // 立刻套用一次版面 / Apply layout once immediately
+        updateResponsiveLayout();
     }
 
     // 建立工具欄模板積木 / Create a template block for the toolbox
@@ -1052,54 +1114,360 @@ public class EditorController {
 
     // 統一管理左側工具欄開關狀態
     // Manage the toolbox open/closed state in one place
+
+    // 設定自適應版面 / Set up responsive layout
+    private void setupResponsiveLayout() {
+
+        /*
+         * 監聽 rootPane 的寬度與高度。
+         * Listen to rootPane width and height.
+         *
+         * 當使用者換螢幕、縮放視窗、或最大化視窗時，
+         * updateResponsiveLayout() 會重新調整 UI。
+         *
+         * When the user changes device, resizes the window, or maximizes it,
+         * updateResponsiveLayout() will adjust the UI again.
+         */
+        rootPane.widthProperty().addListener(
+                (observable, oldValue, newValue) -> updateResponsiveLayout()
+        );
+
+        rootPane.heightProperty().addListener(
+                (observable, oldValue, newValue) -> updateResponsiveLayout()
+        );
+    }
+
+    // 更新自適應版面 / Update responsive layout
+    private void updateResponsiveLayout() {
+
+        double rootWidth = getResponsiveRootWidth();
+        double rootHeight = getResponsiveRootHeight();
+
+        /*
+         * 中間內容高度 = 全部高度 - 上方工具列 - 下方狀態列。
+         * Content height = total height - top bar - bottom bar.
+         *
+         * 這樣 bottom bar 不會跑到螢幕外面。
+         * This prevents the bottom bar from going outside the screen.
+         */
+        double contentHeight = Math.max(
+                MINIMUM_CONTENT_HEIGHT,
+                rootHeight - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT
+        );
+
+        /*
+         * 結果區寬度會依照視窗寬度調整。
+         * Result pane width adjusts based on window width.
+         */
+        double resultWidth = getResponsiveResultWidth(rootWidth);
+        double resultX = rootWidth - resultWidth;
+
+        /*
+         * 上方工具列 / Top bar
+         */
+        topBar.setLayoutX(0.0);
+        topBar.setLayoutY(0.0);
+        topBar.setPrefWidth(rootWidth);
+        topBar.setPrefHeight(TOP_BAR_HEIGHT);
+
+        /*
+         * 下方狀態列 / Bottom bar
+         */
+        bottomBar.setLayoutX(0.0);
+        bottomBar.setLayoutY(rootHeight - BOTTOM_BAR_HEIGHT);
+        bottomBar.setPrefWidth(rootWidth);
+        bottomBar.setPrefHeight(BOTTOM_BAR_HEIGHT);
+
+        /*
+         * 左側工具欄 / Left toolbox
+         */
+        toolboxScrollPane.setLayoutY(TOP_BAR_HEIGHT);
+        toolboxScrollPane.setPrefHeight(contentHeight);
+
+        /*
+         * 滑動按鈕放在工具欄右側中間。
+         * Put the sliding button in the vertical center of the toolbox.
+         */
+        toolboxToggleButton.setLayoutY(
+                TOP_BAR_HEIGHT + (contentHeight - toolboxToggleButton.getPrefHeight()) / 2.0
+        );
+
+        /*
+         * 右側結果區 / Right result pane
+         */
+        resultPane.setLayoutX(resultX);
+        resultPane.setLayoutY(TOP_BAR_HEIGHT);
+        resultPane.setPrefWidth(resultWidth);
+        resultPane.setPrefHeight(contentHeight);
+
+        resultLabel.setLayoutX(24.0);
+        resultLabel.setLayoutY(25.0);
+        resultLabel.setPrefWidth(Math.max(100.0, resultWidth - 48.0));
+        resultLabel.setPrefHeight(Math.max(100.0, contentHeight - 50.0));
+
+        /*
+         * 中間工作區 / Center workspace scroll pane
+         *
+         * 如果工具欄打開，workspace 從 200 開始。
+         * If toolbox is open, workspace starts from 200.
+         *
+         * 如果工具欄收合，workspace 從 24 開始。
+         * If toolbox is collapsed, workspace starts from 24.
+         */
+        double workspaceX = toolboxVisible
+                ? WORKSPACE_OPEN_X
+                : WORKSPACE_CLOSED_X;
+
+        double workspaceWidth = Math.max(
+                MINIMUM_WORKSPACE_WIDTH,
+                resultX - workspaceX
+        );
+
+        workspaceScrollPane.setLayoutX(workspaceX);
+        workspaceScrollPane.setLayoutY(TOP_BAR_HEIGHT);
+        workspaceScrollPane.setPrefWidth(workspaceWidth);
+        workspaceScrollPane.setPrefHeight(contentHeight);
+
+        /*
+         * 工具欄開合位置 / Toolbox open or collapsed position
+         */
+        if (toolboxVisible) {
+            toolboxScrollPane.setLayoutX(TOOLBOX_OPEN_X);
+            toolboxToggleButton.setLayoutX(TOGGLE_BUTTON_OPEN_X);
+        } else {
+            toolboxScrollPane.setLayoutX(TOOLBOX_CLOSED_X);
+            toolboxToggleButton.setLayoutX(TOGGLE_BUTTON_CLOSED_X);
+        }
+
+        /*
+         * 上方 Run / Save button 也跟著視窗寬度調整。
+         * Run and Save buttons also follow the window width.
+         */
+        layoutTopBarButtons(rootWidth);
+
+        /*
+         * 下方 Zoom controls 也跟著視窗寬度調整。
+         * Bottom zoom controls also follow the window width.
+         */
+        layoutBottomBarButtons(rootWidth);
+
+        /*
+         * 滑動按鈕永遠保持在最上層。
+         * Keep sliding button on top.
+         */
+        toolboxToggleButton.toFront();
+    }
+
+    // 根據目前視窗取得 root 寬度 / Get current root width
+    private double getResponsiveRootWidth() {
+
+        if (rootPane.getWidth() > 0.0) {
+            return rootPane.getWidth();
+        }
+
+        return rootPane.getPrefWidth();
+    }
+
+    // 根據目前視窗取得 root 高度 / Get current root height
+    private double getResponsiveRootHeight() {
+
+        if (rootPane.getHeight() > 0.0) {
+            return rootPane.getHeight();
+        }
+
+        return rootPane.getPrefHeight();
+    }
+
+    // 計算右側結果區寬度 / Calculate result pane width
+    private double getResponsiveResultWidth(double rootWidth) {
+
+        double wantedWidth = rootWidth * RESULT_WIDTH_RATIO;
+
+        return clamp(
+                wantedWidth,
+                RESULT_WIDTH_MINIMUM,
+                RESULT_WIDTH_MAXIMUM
+        );
+    }
+
+    // 依照視窗寬度調整上方按鈕位置 / Layout top bar buttons based on window width
+    private void layoutTopBarButtons(double rootWidth) {
+
+        saveButton.setLayoutX(rootWidth - 130.0);
+        runButton.setLayoutX(rootWidth - 220.0);
+
+        saveButton.setLayoutY(12.0);
+        runButton.setLayoutY(12.0);
+    }
+
+    // 依照視窗寬度調整下方縮放控制位置 / Layout bottom zoom controls based on window width
+    private void layoutBottomBarButtons(double rootWidth) {
+
+        zoomResetButton.setLayoutX(rootWidth - 72.0);
+        zoomInButton.setLayoutX(rootWidth - 112.0);
+        zoomLabel.setLayoutX(rootWidth - 206.0);
+        zoomOutButton.setLayoutX(rootWidth - 252.0);
+
+        zoomResetButton.setLayoutY(6.0);
+        zoomInButton.setLayoutY(6.0);
+        zoomLabel.setLayoutY(10.0);
+        zoomOutButton.setLayoutY(6.0);
+    }
+
     private void setToolboxVisible(boolean visible) {
 
         toolboxVisible = visible;
-
-        if (toolboxVisible) {
-
-            /*
-             * 工具欄打開狀態 / Toolbox opened:
-             *
-             * [ toolbox ][ > ][ workspace ][ result ]
-             */
-            toolboxScrollPane.setLayoutX(TOOLBOX_OPEN_X);
-            toolboxToggleButton.setLayoutX(TOGGLE_BUTTON_OPEN_X);
-
-            workspaceScrollPane.setLayoutX(WORKSPACE_OPEN_X);
-            workspaceScrollPane.setPrefWidth(
-                    resultPane.getLayoutX() - TOOLBOX_WIDTH
-            );
-
-        } else {
-
-            /*
-             * 工具欄收合狀態 / Toolbox collapsed:
-             *
-             * [ > ][ wider workspace ][ result ]
-             */
-            toolboxScrollPane.setLayoutX(TOOLBOX_CLOSED_X);
-            toolboxToggleButton.setLayoutX(TOGGLE_BUTTON_CLOSED_X);
-
-            workspaceScrollPane.setLayoutX(WORKSPACE_CLOSED_X);
-            workspaceScrollPane.setPrefWidth(
-                    resultPane.getLayoutX() - TOGGLE_BUTTON_WIDTH
-            );
-        }
 
         /*
          * 按鈕文字固定為 ">"。
          * Button text stays as ">".
          *
-         * 這符合目前 UI 概念：按一下滑走，再按一下滑回來。
-         * This matches the current UI concept: press once to slide away,
-         * press again to slide back.
+         * 目前 UI 概念：按一下收合，再按一下展開。
+         * Current UI concept: click once to collapse, click again to open.
          */
         toolboxToggleButton.setText(">");
+
+        /*
+         * 工具欄開合後，重新計算 responsive layout。
+         * After toolbox state changes, recalculate responsive layout.
+         */
+        updateResponsiveLayout();
 
         // 按鈕永遠留在最上層，避免被 workspace 或其他 pane 蓋住
         // Keep button on top so it is not covered by workspace or other panes
         toolboxToggleButton.toFront();
+    }
+
+    // 儲存目前工作區 / Save current workspace
+    @FXML
+    private void handleSaveWorkspace() {
+
+        /*
+         * 這個功能會把 workspace 存成 .vjproj 檔案。
+         * This feature saves the workspace as a .vjproj file.
+         *
+         * 儲存內容不是圖片，而是 visual program data：
+         * The saved content is not an image. It is visual program data:
+         *
+         * 1. 每個 block 的種類 / each block type
+         * 2. 每個 block 的文字或輸入值 / each block text or typed value
+         * 3. 每個 block 的位置 / each block position
+         * 4. 每條 connection 的來源與目標 / each connection source and target
+         * 5. 目前 zoom level / current zoom level
+         */
+        FileChooser fileChooser = new FileChooser();
+
+        fileChooser.setTitle("Save Visual Java Project");
+
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter(
+                        "Visual Java Project (*.vjproj)",
+                        "*.vjproj"
+                )
+        );
+
+        fileChooser.setInitialFileName("visual-java-project.vjproj");
+
+        File selectedFile = fileChooser.showSaveDialog(
+                rootPane.getScene().getWindow()
+        );
+
+        if (selectedFile == null) {
+            return;
+        }
+
+        if (!selectedFile.getName().toLowerCase().endsWith(".vjproj")) {
+            selectedFile = new File(
+                    selectedFile.getParentFile(),
+                    selectedFile.getName() + ".vjproj"
+            );
+        }
+
+        try {
+            WorkspaceFileManager.saveWorkspace(
+                    selectedFile,
+                    workspaceZoom,
+                    blocksLayer.getChildren()
+            );
+
+            resultLabel.setText(
+                    "Saved workspace:\n" + selectedFile.getAbsolutePath()
+            );
+
+        } catch (Exception exception) {
+            resultLabel.setText(
+                    "Save failed:\n" + exception.getMessage()
+            );
+        }
+    }
+
+    // 放大工作區 / Zoom in the workspace
+    @FXML
+    private void handleZoomIn() {
+
+        workspaceZoom = clamp(
+                workspaceZoom + ZOOM_STEP,
+                ZOOM_MINIMUM,
+                ZOOM_MAXIMUM
+        );
+
+        applyWorkspaceZoom();
+    }
+
+    // 縮小工作區 / Zoom out the workspace
+    @FXML
+    private void handleZoomOut() {
+
+        workspaceZoom = clamp(
+                workspaceZoom - ZOOM_STEP,
+                ZOOM_MINIMUM,
+                ZOOM_MAXIMUM
+        );
+
+        applyWorkspaceZoom();
+    }
+
+    // 重設工作區縮放 / Reset workspace zoom
+    @FXML
+    private void handleResetZoom() {
+
+        workspaceZoom = 1.00;
+
+        applyWorkspaceZoom();
+    }
+
+    // 套用工作區縮放 / Apply workspace zoom
+    private void applyWorkspaceZoom() {
+
+        /*
+         * workspace 是 arrowLayer 和 blocksLayer 的共同父容器。
+         * workspace is the parent container of arrowLayer and blocksLayer.
+         *
+         * 所以縮放 workspace 時，積木和線會一起縮放。
+         * Therefore, when we scale workspace, blocks and lines scale together.
+         */
+        workspace.setScaleX(workspaceZoom);
+        workspace.setScaleY(workspaceZoom);
+
+        /*
+         * 縮放中心放在左上角。
+         * Put the scale pivot near the top-left corner.
+         *
+         * 這樣使用者放大縮小時，工作區比較不會突然往中間跳。
+         * This avoids the workspace jumping too much toward the center.
+         */
+        workspace.setTranslateX(
+                (workspace.getPrefWidth() * (workspaceZoom - 1.0)) / 2.0
+        );
+        workspace.setTranslateY(
+                (workspace.getPrefHeight() * (workspaceZoom - 1.0)) / 2.0
+        );
+
+        if (zoomLabel != null) {
+            zoomLabel.setText(
+                    "Zoom: " + Math.round(workspaceZoom * 100) + "%"
+            );
+        }
     }
 
     // 執行目前工作區的積木 / Run blocks currently placed in the workspace
