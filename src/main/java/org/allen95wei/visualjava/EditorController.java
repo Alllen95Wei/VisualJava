@@ -107,36 +107,47 @@ public class EditorController {
 
         // 建立左邊工具欄的模板積木 / Create template blocks in the left toolbox
         toolbox.getChildren().addAll(
-                createTemplateBlock("開始", Color.RED, BlockType.START),
-                createTemplateBlock("列印", Color.LIGHTPINK, BlockType.PRINT),
-                createTemplateBlock("賦值", Color.DARKGREY, BlockType.SET),
+                // ===== Flow / process blocks =====
+                // 綠色代表開始 / Green means start
+                createTemplateBlock("開始", Color.web("#2E7D32"), BlockType.START),
 
-                createTemplateBlock("字串變數", Color.LIGHTGREEN, BlockType.STRING_VARIABLE),
-                createTemplateBlock("數值變數", Color.LIGHTGREEN, BlockType.NUM_VARIABLE),
+                // 藍色代表流程處理 / Blue means process or assignment
+                createTemplateBlock("賦值", Color.web("#1565C0"), BlockType.SET),
 
-                // 值與四則運算 / Value and arithmetic operators
-                createTemplateBlock("值", Color.LIGHTYELLOW, BlockType.VALUE),
-                createTemplateBlock("+", Color.DARKORANGE, BlockType.ADD),
-                createTemplateBlock("-", Color.DARKORANGE, BlockType.SUBTRACT),
-                createTemplateBlock("×", Color.DARKORANGE, BlockType.MULTIPLY),
-                createTemplateBlock("÷", Color.DARKORANGE, BlockType.DIVIDE),
+                // 紅粉色代表輸出 / Magenta-red means output
+                createTemplateBlock("列印", Color.web("#AD1457"), BlockType.PRINT),
 
-                createTemplateBlock("如果", Color.YELLOW, BlockType.IF),
-                createTemplateBlock("如果結束", Color.YELLOW, BlockType.ENDIF),
-                createTemplateBlock("非", Color.web("#19A9E2"), BlockType.NOT),
-                createTemplateBlock("且", Color.web("#19A9E2"), BlockType.AND),
-                createTemplateBlock("或", Color.web("#19A9E2"), BlockType.OR),
+                // ===== Variable and value blocks =====
+                // 藍綠色代表資料儲存 / Teal means stored data
+                createTemplateBlock("數值變數", Color.web("#00897B"), BlockType.NUM_VARIABLE),
+                createTemplateBlock("字串變數", Color.web("#00796B"), BlockType.STRING_VARIABLE),
 
-                createTemplateBlock("大於", Color.web("#19A9E2"), BlockType.GREATER),
-                createTemplateBlock("小於", Color.web("#19A9E2"), BlockType.LESS),
-                createTemplateBlock("等於", Color.web("#19A9E2"), BlockType.EQUAL)
+                // 金色代表直接輸入的值 / Gold means literal value
+                createTemplateBlock("值", Color.web("#B28704"), BlockType.VALUE),
 
-                /*
-                createTemplateBlock("判斷", Color.LIGHTBLUE, BlockType.DECISION),
-                createTemplateBlock("步驟", Color.ORANGE, BlockType.PROCESS),
-                createTemplateBlock("變數", Color.LIGHTGREEN, BlockType.VARIABLE),
-                createTemplateBlock("條件", Color.PLUM, BlockType.CONDITION)
-                */
+                // ===== Arithmetic blocks =====
+                // 橘色系代表四則運算 / Orange family means arithmetic
+                createTemplateBlock("+", Color.web("#EF6C00"), BlockType.ADD),
+                createTemplateBlock("-", Color.web("#D84315"), BlockType.SUBTRACT),
+                createTemplateBlock("×", Color.web("#BF360C"), BlockType.MULTIPLY),
+                createTemplateBlock("÷", Color.web("#6D4C41"), BlockType.DIVIDE),
+
+                // ===== IF control blocks =====
+                // 紫色代表控制流程 / Purple means control flow
+                createTemplateBlock("如果", Color.web("#6A1B9A"), BlockType.IF),
+                createTemplateBlock("如果結束", Color.web("#5E35B1"), BlockType.ENDIF),
+
+                // ===== Comparison blocks =====
+                // 藍色與青色系代表比較 / Blue and cyan family means comparison
+                createTemplateBlock("大於", Color.web("#0277BD"), BlockType.GREATER),
+                createTemplateBlock("小於", Color.web("#00838F"), BlockType.LESS),
+                createTemplateBlock("等於", Color.web("#00695C"), BlockType.EQUAL),
+
+                // ===== Logic blocks =====
+                // 深紫色代表邏輯運算 / Dark purple means logical operation
+                createTemplateBlock("且", Color.web("#4527A0"), BlockType.AND),
+                createTemplateBlock("或", Color.web("#512DA8"), BlockType.OR),
+                createTemplateBlock("非", Color.web("#7B1FA2"), BlockType.NOT)
         );
 
         // 初始化右邊結果區文字 / Initialize result area text

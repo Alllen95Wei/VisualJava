@@ -106,16 +106,16 @@ public class BlockFactory {
             // 這四個符號是固定的，user 不能改文字
             // These four symbols are fixed and cannot be edited by the user
             case ADD ->
-                    new AddBlock();
+                    new AddBlock(color);
 
             case SUBTRACT ->
-                    new SubtractBlock();
+                    new SubtractBlock(color);
 
             case MULTIPLY ->
-                    new MultiplyBlock();
+                    new MultiplyBlock(color);
 
             case DIVIDE ->
-                    new DivideBlock();
+                    new DivideBlock(color);
         };
 
         // 記錄積木種類，之後 backend 或判斷邏輯會用到

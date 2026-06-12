@@ -50,7 +50,8 @@ public class ValueBlock extends Block {
 
         textField.setStyle("""
                 -fx-background-color: transparent;
-                -fx-text-fill: black;
+                -fx-text-fill: white;
+                -fx-prompt-text-fill: rgba(255, 255, 255, 0.70);
                 -fx-font-family: 'Segoe UI';
                 -fx-font-size: 14;
                 -fx-font-weight: bold;

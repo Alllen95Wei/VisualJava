@@ -46,6 +46,7 @@ public abstract class Block extends StackPane {
                 -fx-font-family: 'Segoe UI';
                 -fx-font-size: 18;
                 -fx-font-weight: bold;
+                -fx-text-fill: white;
                 """);
 
         setAlignment(Pos.CENTER);
