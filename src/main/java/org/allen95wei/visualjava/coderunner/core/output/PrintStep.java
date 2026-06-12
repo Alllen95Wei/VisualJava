@@ -35,7 +35,6 @@ public class PrintStep implements Step {
 
     @Override
     public void execute(ExecutionContext context) {
-
         if (contextKey == null) {
             System.out.println(result);
             return;
