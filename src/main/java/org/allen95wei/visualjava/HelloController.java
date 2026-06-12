@@ -23,7 +23,7 @@ public class HelloController {
                 .getScene()
                 .getWindow();
 
-        currentStage.setTitle("Block Editor");
+        currentStage.setTitle("ED1TØR");
         currentStage.setScene(editorScene);
         currentStage.show();
     }
