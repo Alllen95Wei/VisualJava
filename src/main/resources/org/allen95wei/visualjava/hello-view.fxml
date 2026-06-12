@@ -31,7 +31,7 @@
         顯示應用程式名稱 / Shows the application name
     -->
     <Label fx:id="welcomeText"
-           text="Visual Java Editor"
+           text="ED1TØR"
            alignment="CENTER"
            textAlignment="CENTER"
            style="-fx-font-family: 'Segoe UI';

@@ -58,7 +58,7 @@ public class HelloApplication extends Application {
          * 設定視窗基本資訊。
          * Set basic window information.
          */
-        stage.setTitle("Visual Java Editor");
+        stage.setTitle("ED1TØR");
         stage.setScene(scene);
 
         /*
